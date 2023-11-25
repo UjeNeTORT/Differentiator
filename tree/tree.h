@@ -75,6 +75,8 @@ struct Tree
 
 typedef int (* NodeAction_t) (TreeNode * node);
 
+double Eval (const TreeNode * node);
+
 TreeNode* TreeNodeCtor (double val, NodeType type);
 int       TreeNodeDtor (TreeNode * node);
 

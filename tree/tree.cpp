@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -16,6 +17,52 @@
 
 #include "../colors.h"
 #include "tree.h"
+
+double Eval (const TreeNode * node)
+{
+    assert(node);
+
+    // todo change assert to if !node
+
+    if (node->data.type == NUM)
+    {
+        return node->data.val;
+    }
+
+    if (node->data.type == BI_OP)
+    {
+        double left  = Eval(node->left);
+        double right = Eval(node->right);
+
+        switch ((int) node->data.val)
+        {
+        case ADD:
+            return left + right;
+        case SUB:
+            return left - right;
+        case MUL:
+            return left * right;
+        case DIV:
+            return left / right;
+        case POW:
+            return pow(left,right);
+        default:
+            break;
+        }
+
+        return 0;
+    }
+
+    if (node->data.type == UN_OP)
+    {
+        double left = Eval(node->left);
+
+        return 0;
+    }
+
+
+    return 0;
+}
 
 TreeNode* TreeNodeCtor (double val, NodeType type)
 {
@@ -304,6 +351,8 @@ NodeData ReadNodeData(const char * infix_tree, int * offset)
     }
     else
     {
+        // todo variables
+
         fprintf(stdout, "Unknown operator: %s\n", op_or_num);
 
         abort();
