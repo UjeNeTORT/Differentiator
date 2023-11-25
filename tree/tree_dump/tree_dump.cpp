@@ -27,9 +27,17 @@ int TreeDump (const char * HTML_fname, const Tree * tree)
     sprintf(dot_fname, "graph_%d.dot", dump_id);
     DotTreePrint (dot_fname, tree);
 
+    char detailed_dot_fname[100] = "";
+    sprintf(detailed_dot_fname, "detailed_graph_%d.dot", dump_id);
+    DotTreeDetailedPrint (detailed_dot_fname, tree);
+
     char * command = (char *) calloc (COMMAND_BUF_SIZE, sizeof(char));
-    sprintf (command, "dot -Tsvg %s%s -o %sgraph_dump_%d.svg", DOT_FILE_PATH, dot_fname, GRAPH_PNGS_PATH, dump_id);
+    sprintf (command, "dot -Tpng %s%s -o %sgraph_dump_%d.png", DOT_FILE_PATH, dot_fname, GRAPH_PNGS_PATH, dump_id);
     system (command);
+
+    sprintf (command, "dot -Tpng %s%s -o %sdetailed_graph_dump_%d.png", DOT_FILE_PATH, detailed_dot_fname, GRAPH_PNGS_PATH, dump_id);
+    system (command);
+
     free(command);
 
     WriteHTML(HTML_fname, dump_id);
@@ -74,7 +82,15 @@ int WriteHTML (const char * HTML_fname, int dump_id)
 
     fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE</p>", "#283D3B", asctime(loc_time));
 
-    fprintf (HTML_file, "<img src=\"../../../../%sgraph_dump_%d.svg\">\n", GRAPH_PNGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
+    fprintf (HTML_file, "<img src=\"../../../../%sgraph_dump_%d.png\">\n", GRAPH_PNGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
+
+    fprintf(HTML_file, "</div>\n");
+    /////////////////////////////////
+    fprintf(HTML_file, "<div detailed_graph_%d style=\"background-color: %s; color: %s;\">\n", dump_id, GRAPH_BGCLR, GRAPH_TEXTCLR);
+
+    fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE DETAILED </p>", "#283D3B", asctime(loc_time));
+
+    fprintf (HTML_file, "<img src=\"../../../../%sdetailed_graph_dump_%d.png\">\n", GRAPH_PNGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
 
     fprintf(HTML_file, "</div>\n");
 
@@ -165,13 +181,80 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node)
 
     }
 
-    fprintf (stream, "\tnode_%d [style = filled, shape = circle, label = \"%s\", fillcolor = \"%s\", fontcolor = \"%s\"]\n", node_id, node_data, color, GRAPH_TEXTCLR);
+    fprintf (stream, "\tnode_%d [style = filled, shape = circle, label = \"%s\", fillcolor = \"%s\", fontcolor = \"%s\"];\n", node_id, node_data, color, GRAPH_TEXTCLR);
 
     if (int left_subtree_id = DotSubtreePrint (stream, node->left))
-        fprintf (stream, "\tnode_%d -> node_%d\n", node_id, left_subtree_id);
+        fprintf (stream, "\tnode_%d -> node_%d;\n", node_id, left_subtree_id);
 
     if (int right_subtree_id = DotSubtreePrint (stream, node->right))
-        fprintf (stream, "\tnode_%d -> node_%d\n", node_id, right_subtree_id);
+        fprintf (stream, "\tnode_%d -> node_%d;\n", node_id, right_subtree_id);
+
+    return node_id;
+}
+
+int DotTreeDetailedPrint (const char * dot_fname, const Tree * tree)
+{
+    assert(dot_fname);
+
+    char * dot_path = GetFilePath(DOT_FILE_PATH, dot_fname);
+    FILE * dot_file = fopen(dot_path, "wb");
+
+    fprintf (dot_file, "digraph DETAILED_TREE {\n"
+                        "bgcolor =\"%s\"", GRAPH_BGCLR);
+
+    DotSubtreeDetailedPrint(dot_file, (const TreeNode *) tree->root);
+
+    fprintf (dot_file, "}");
+
+    fclose(dot_file);
+    free(dot_path);
+
+    return 0;
+}
+
+int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node)
+{
+    assert(stream);
+
+    if (!node)
+    {
+        return 0;
+    }
+
+    int node_id = rand();
+
+    const char * color = "";
+
+    switch (node->data.type)
+    {
+    case NUM:
+        color = GRAPH_NUMCLR;
+        break;
+
+    case VAR:
+        color = GRAPH_VARCLR;
+        break;
+
+    case BI_OP:
+        color = GRAPH_OPCLR;
+        break;
+
+    case UN_OP:
+        color = GRAPH_OPCLR;
+        break;
+
+    default:
+        break;
+    }
+
+    fprintf (stream, "\tdetailed_node_%d [style = filled, shape = record, fillcolor = \"%s\", fontcolor = \"%s\"];\n", node_id, color, GRAPH_TEXTCLR);
+    fprintf (stream, "\tdetailed_node_%d [label = \"{type = %d | val = %.3lf}\"];\n", node_id, node->data.type, node->data.val);
+
+    if (int left_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->left))
+        fprintf (stream, "\tdetailed_node_%d -> detailed_node_%d;\n", node_id, left_subtree_id);
+
+    if (int right_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->right))
+        fprintf (stream, "\tdetailed_node_%d -> detailed_node_%d;\n", node_id, right_subtree_id);
 
     return node_id;
 }
