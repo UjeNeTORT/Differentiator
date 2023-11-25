@@ -203,8 +203,6 @@ TreeNode * ReadSubtree (const char * infix_tree, int * offset)
 {
     assert(infix_tree);
 
-    PRINTF_DEBUG("received: %s", infix_tree + *offset);
-
     while(isspace(infix_tree[*offset]))
     {
         *offset += 1;
@@ -225,11 +223,11 @@ TreeNode * ReadSubtree (const char * infix_tree, int * offset)
 
     TreeNode * node = TreeNodeCtor(0, NUM);
     *offset += 1;
-    PRINTF_DEBUG("node created\n");
+
     node->left = ReadSubtree(infix_tree, offset);
-    PRINTF_DEBUG("left subtree readen\n");
+
     node->data = ReadNodeData(infix_tree, offset);
-    PRINTF_DEBUG("right subtree readen\n");
+
     node->right = ReadSubtree(infix_tree, offset);
 
     while(infix_tree[(*offset)++] != ')')
@@ -266,7 +264,6 @@ NodeData ReadNodeData(const char * infix_tree, int * offset)
     int addition = 0;
 
     sscanf((infix_tree + *offset), "%s%n", op_or_num, &addition);
-    PRINTF_DEBUG("op_or_num = %s\n", op_or_num);
 
     *offset += addition;
 
