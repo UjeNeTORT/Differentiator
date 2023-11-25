@@ -8,8 +8,8 @@ TEST_MAIN = ./test.exe
 MAIN = ./main.exe
 CPP = g++
 
-start: tree.o test.o
-	$(CPP) tree.o test.o -o $(TEST_MAIN) $(CFLAGS)
+start: tree.o tree_dump.o test.o
+	$(CPP) tree.o tree_dump.o test.o -o $(TEST_MAIN) $(CFLAGS)
 	$(TEST_MAIN)
 
 # stack.o : stack/stack.cpp
@@ -19,8 +19,8 @@ start: tree.o test.o
 tree.o : tree/tree.cpp
 	$(CPP) tree/tree.cpp -c
 
-# tree_dump.o : tree_dump/tree_dump.cpp
-# 	$(CPP) tree_dump/tree_dump.cpp -c
+tree_dump.o : tree/tree_dump/tree_dump.cpp
+	$(CPP) tree/tree_dump/tree_dump.cpp -c
 
 test.o : test.cpp
 	$(CPP) test.cpp -c
@@ -31,6 +31,9 @@ main.o : main.cpp
 clean:
 	rm -f $(TARGET)
 	rm -f *.o
+	rm -f tree/tree_dump/dumps/png/*.*
+	rm -f tree/tree_dump/dumps/dot_files/*.*
+	rm -f tree/tree_dump/dumps/dumps/*.*
 	rm -f *.out
 	rm -f *.exe
 	rm -f *.dot
