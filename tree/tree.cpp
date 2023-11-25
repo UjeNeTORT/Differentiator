@@ -203,14 +203,16 @@ TreeNode * ReadSubtree (const char * infix_tree, int * offset)
 {
     assert(infix_tree);
 
-    while(isspace(infix_tree[++*offset]))
+    PRINTF_DEBUG("received: %s", infix_tree + *offset);
+
+    while(isspace(infix_tree[*offset]))
     {
-        ;
+        *offset += 1;
     }
 
     if (infix_tree[*offset] == '*')
     {
-        *offset++;
+        *offset += 1;
 
         return NULL;
     }
@@ -222,16 +224,17 @@ TreeNode * ReadSubtree (const char * infix_tree, int * offset)
     }
 
     TreeNode * node = TreeNodeCtor(0, NUM);
-    PRINTF_DEBUG("infix_tree[*offset] = %c\n", infix_tree[*offset]);
+    *offset += 1;
+    PRINTF_DEBUG("node created\n");
     node->left = ReadSubtree(infix_tree, offset);
-
+    PRINTF_DEBUG("left subtree readen\n");
     node->data = ReadNodeData(infix_tree, offset);
-
+    PRINTF_DEBUG("right subtree readen\n");
     node->right = ReadSubtree(infix_tree, offset);
 
-    while(infix_tree[*offset] != ')')
+    while(infix_tree[(*offset)++] != ')')
     {
-        *offset++;
+        ;
     }
 
     return node;
@@ -255,7 +258,7 @@ NodeData ReadNodeData(const char * infix_tree, int * offset)
 
     while(isspace(infix_tree[*offset]))
     {
-        *offset++;
+        *offset += 1;
     }
 
     char op_or_num[MAX_OP] = "";
@@ -263,6 +266,7 @@ NodeData ReadNodeData(const char * infix_tree, int * offset)
     int addition = 0;
 
     sscanf((infix_tree + *offset), "%s%n", op_or_num, &addition);
+    PRINTF_DEBUG("op_or_num = %s\n", op_or_num);
 
     *offset += addition;
 
@@ -357,9 +361,14 @@ int WriteNodeData(FILE * stream, NodeData data)
     }
     else if (data.type == BI_OP || data.type == UN_OP)
     {
-        // ! crutch
+        // ! cringe code
         switch ((int) data.val)
         {
+        case EQUAL:
+            fprintf(stream, "= ");
+
+            break;
+
         case ADD:
             fprintf(stream, "+ ");
 
@@ -399,7 +408,7 @@ int PrintfDebug (const char * funcname, int line, const char * filename, const c
 {
     assert(format);
 
-    fprintf(stderr, GREEN_CLR "[DEBUG MESSAGE %s %d %s]\n<< ", funcname, line, filename);
+    fprintf(stderr, BLACK_CLR "[DEBUG MESSAGE %s %d %s]\n<< ", funcname, line, filename);
 
     va_list ptr;
 
