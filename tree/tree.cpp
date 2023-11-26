@@ -60,7 +60,6 @@ double Eval (const TreeNode * node)
         return 0;
     }
 
-
     return 0;
 }
 
@@ -109,7 +108,7 @@ int TreeDtor (Tree * tree)
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        free(tree->nametable.table[i]);
+        free(tree->nametable.table[i]); //? do i even need this loop?
     }
     tree->nametable.free = 0;
 
@@ -281,7 +280,7 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
     }
 
     TreeNode * node = TreeNodeCtor(0, NUM);
-    *offset += 1;
+    *offset += 1; // skip (
 
     node->left = ReadSubtree(infix_tree, nametable, offset);
 
@@ -293,6 +292,8 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
     {
         (*offset)++;
     }
+
+    (*offset)++;
 
     return node;
 }
@@ -383,7 +384,7 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
     return data;
 }
 
-int WriteSubtree(FILE * stream, const TreeNode * node)
+int WriteSubtree(FILE * stream, const TreeNode * node, const NameTable * nametable)
 {
     assert(stream);
 
@@ -396,9 +397,9 @@ int WriteSubtree(FILE * stream, const TreeNode * node)
 
     fprintf(stream, "( ");
 
-    WriteSubtree(stream, node->left);
-    int ret_val = WriteNodeData(stream, node->data);
-    WriteSubtree(stream, node->right);
+    WriteSubtree(stream, node->left, nametable);
+    int ret_val = WriteNodeData(stream, node->data, nametable);
+    WriteSubtree(stream, node->right, nametable);
 
     fprintf(stream, ") ");
 
@@ -410,14 +411,14 @@ int WriteTree(FILE * stream, const Tree * tree)
     assert(stream);
     assert(tree);
 
-    int ret_val = WriteSubtree(stream, tree->root);
+    int ret_val = WriteSubtree(stream, tree->root, (const NameTable *) &tree->nametable);
 
     fprintf(stream, "\n");
 
     return ret_val;
 }
 
-int WriteNodeData(FILE * stream, NodeData data)
+int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
 {
     assert(stream);
 
@@ -426,6 +427,10 @@ int WriteNodeData(FILE * stream, NodeData data)
         fprintf(stream, "%lf ", data.val);
 
         return 0;
+    }
+    else if (data.type == VAR)
+    {
+        fprintf(stream, "%s ", nametable->table[(int) data.val]);
     }
     else if (data.type == BI_OP || data.type == UN_OP)
     {
@@ -476,7 +481,7 @@ int UpdNameTable(NameTable * nametable, char * word)
 {
     assert(word);
 
-    nametable->table[nametable->free] = word;
+    strcpy(nametable->table[nametable->free], word);
 
     return nametable->free++;
 }
@@ -485,17 +490,19 @@ int IncorrectVarName(const char * word)
 {
     assert(word);
 
-    if (!isalpha(*word))
+    if (!isalpha(*word++))
     {
         return 1;
     }
 
-    while (*word++)
+    while (*word)
     {
-        if (!isalnum(*word))
+        if (!isalnum(*word) && *word != '_')
         {
             return 1;
         }
+
+        word++;
     }
 
     return 0;

@@ -106,9 +106,9 @@ Tree       ReadTree     (const char * infix_tree);
 TreeNode * ReadSubtree  (const char * infix_tree, NameTable * nametable, int * offset);
 NodeData   ReadNodeData (const char * infix_tree, NameTable * nametable, int * offset);
 
-int WriteSubtree  (FILE * stream, const TreeNode * node);
+int WriteSubtree  (FILE * stream, const TreeNode * node, const NameTable * nametable);
 int WriteTree     (FILE * stream, const Tree * tree);
-int WriteNodeData (FILE * stream, NodeData data);
+int WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
 int UpdNameTable     (NameTable * nametable, char * word);
 int IncorrectVarName (const char * word);
