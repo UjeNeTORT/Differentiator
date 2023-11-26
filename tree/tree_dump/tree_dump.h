@@ -34,8 +34,8 @@ int DotTreePrint    (const char * dot_fname, const Tree * tree);
 int WriteHTML       (const char * HTML_fname, int dump_id);
 int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable);
 
-int DotTreeDetailedPrint    (const char * dot_fname, const NameTable nametable);
-int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, Tree * tree);
+int DotTreeDetailedPrint    (const char * dot_fname, const Tree * tree);
+int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nametable);
 
 char * GetFilePath (const char * path, const char * fname);
 

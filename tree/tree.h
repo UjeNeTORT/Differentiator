@@ -110,7 +110,7 @@ int WriteSubtree  (FILE * stream, const TreeNode * node);
 int WriteTree     (FILE * stream, const Tree * tree);
 int WriteNodeData (FILE * stream, NodeData data);
 
-int UpdNameTable     (NameTable * nametable, const char * word);
+int UpdNameTable     (NameTable * nametable, char * word);
 int IncorrectVarName (const char * word);
 
 int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) );
