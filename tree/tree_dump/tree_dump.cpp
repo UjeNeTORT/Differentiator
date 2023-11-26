@@ -136,10 +136,6 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
         //! copypaste
         switch ((int) node->data.val)
         {
-            case EQUAL:
-                sprintf(node_data, "=");
-                break;
-
             case ADD:
                 sprintf(node_data, "+");
                 break;
@@ -171,6 +167,11 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 
         switch ((int) node->data.val)
         {
+            case EQUAL:
+                sprintf(node_data, "=");
+                break;
+
+
             default:
                 break;
         }
