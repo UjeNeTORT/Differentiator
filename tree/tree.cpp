@@ -332,7 +332,7 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
     assert(infix_tree);
     assert(offset);
 
-    NodeData data = {NUM, 0};
+    NodeData data = {ERR, 0};
 
     while(isspace(infix_tree[*offset]))
     {
@@ -347,57 +347,22 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
 
     *offset += addition;
 
-    if (data.val = atof(word))
+    if (ReadAssignDouble(&data, word))
     {
         return data;
     }
 
-    if (streq(word, "="))
+    if (ReadAssignOperator(&data, word))
     {
-        data.type = UN_OP;
-        data.val = EQUAL;
-    }
-    else if (streq(word, "+"))
-    {
-        data.type = BI_OP;
-        data.val = ADD;
-    }
-    else if (streq(word, "-"))
-    {
-        data.type = BI_OP;
-        data.val = SUB;
-    }
-    else if (streq(word, "*"))
-    {
-        data.type = BI_OP;
-        data.val = MUL;
-    }
-    else if (streq(word, "/"))
-    {
-        data.type = BI_OP;
-        data.val = DIV;
-    }
-    else if (streq(word, "^"))
-    {
-        data.type = BI_OP;
-        data.val = POW;
-    }
-    else // variable
-    {
-        if (IncorrectVarName((const char *) word))
-        {
-            fprintf(stderr, "ReadNodeData: incorrect variable name \"%s\"\n", word);
-
-            abort();
-        }
-
-        int var_id = UpdNameTable(nametable, word);
-
-        data.type = VAR;
-        data.val  = var_id;
+        return data;
     }
 
-    return data;
+    if (ReadAssignVariable(&data, word, nametable))
+    {
+        return data;
+    }
+
+    return data; // error NodeType
 }
 
 int WriteSubtree(FILE * stream, const TreeNode * node, const NameTable * nametable)
@@ -522,6 +487,78 @@ int IncorrectVarName(const char * word)
     }
 
     return 0;
+}
+
+int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
+{
+    assert(data);
+    assert(word);
+
+    if (IncorrectVarName((const char *) word))
+    {
+        fprintf(stderr, "ReadNodeData: incorrect variable name \"%s\"\n", word);
+
+        return 0;
+    }
+
+    int var_id = UpdNameTable(nametable, word);
+
+    data->type = VAR;
+    data->val  = var_id;
+
+    return 1;
+}
+
+int ReadAssignOperator (NodeData * data, char * word)
+{
+    assert(data);
+    assert(word);
+
+    for (size_t i = 0; i < OPERATIONS_NUM; i++)
+    {
+        if (streq(word, OPERATIONS[i].name))
+        {
+            data->type = OPERATIONS[i].type;
+            data->val  = OPERATIONS[i].opcode;
+
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int ReadAssignDouble (NodeData * data, char * word)
+{
+    assert(data);
+    assert(word);
+
+    if (IsDouble(word)) // ! WARNING CRUTCH ! check if word represents double
+    {
+        data->type = NUM;
+        data->val = atof(word);
+
+        return 1; // assigned double to data
+    }
+
+    return 0; // didnt assign double to data
+}
+
+int IsDouble (char * word) // ! WARNING crutch function
+{
+    assert(word);
+
+    if (IsZero(atof(word)) && *word != '0' && *word != '.')
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int IsZero (double num)
+{
+    return abs(num) < EPS ? 1 : 0;
 }
 
 int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...)

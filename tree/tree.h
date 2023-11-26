@@ -12,25 +12,19 @@
 
 #include <stdio.h>
 
+#include "operations.h"
+
 #define streq(s1, s2) (!strcmp((s1), (s2)))
 
 #define PRINTF_DEBUG(format, ...) \
     PrintfDebug (__PRETTY_FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
 
 const int MAX_TREE = 5000;
-const int MAX_OP   = 30; // max len of operator or variable name // todo rename
+const int MAX_OP   = 10; // max len of operator or variable name // todo rename
 
 const int NAMETABLE_CAPACITY = 10;
 
-typedef enum
-{
-    EQUAL = 0,
-    ADD = 1,
-    SUB = 2,
-    MUL = 3,
-    DIV = 4,
-    POW = 5,
-} Opcodes;
+const double EPS = 1e-7;
 
 typedef enum
 {
@@ -45,14 +39,6 @@ typedef enum
     REPLACE = 0,
     RIGHT   = 1,
 } NodeLocation;
-
-typedef enum
-{
-    NUM   = 0, // number
-    VAR   = 1, // variable
-    BI_OP = 2, // binary operator
-    UN_OP = 3, // unary operator
-} NodeType;
 
 struct NameTable
 {
@@ -113,6 +99,14 @@ int WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
 int UpdNameTable     (NameTable * nametable, char * word);
 int IncorrectVarName (const char * word);
+
+int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable);
+int ReadAssignOperator (NodeData * data, char * word);
+int ReadAssignDouble   (NodeData * data, char * word);
+
+int IsDouble (char * word); // ! WARNING cructh function
+
+int IsZero (double num);
 
 int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) );
 
