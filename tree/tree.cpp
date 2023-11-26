@@ -311,6 +311,22 @@ Tree ReadTree (const char * infix_tree)
     return tree;
 }
 
+Tree ReadTree (FILE * stream)
+{
+    assert(stream);
+
+    char * infix_tree = (char *) calloc(MAX_TREE, sizeof(char));
+
+    fgets(infix_tree, MAX_TREE, stream);
+    infix_tree[(strcspn(infix_tree, "\r\n"))] = 0;
+
+    Tree readen = ReadTree((const char *) infix_tree);
+
+    free(infix_tree);
+
+    return readen;
+}
+
 NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offset)
 {
     assert(infix_tree);

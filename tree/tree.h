@@ -102,6 +102,7 @@ int       TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeActio
 TreeNode * SubtreeFind (TreeNode * node, double val, NodeType type);
 TreeNode * TreeFind    (Tree * tree, double val, NodeType type);
 
+Tree       ReadTree     (FILE * stream);
 Tree       ReadTree     (const char * infix_tree);
 TreeNode * ReadSubtree  (const char * infix_tree, NameTable * nametable, int * offset);
 NodeData   ReadNodeData (const char * infix_tree, NameTable * nametable, int * offset);
