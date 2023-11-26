@@ -17,8 +17,10 @@
 #define PRINTF_DEBUG(format, ...) \
     PrintfDebug (__PRETTY_FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
 
-const int MAX_TREE = 1000;
-const int MAX_OP = 10;
+const int MAX_TREE = 5000;
+const int MAX_OP   = 30; // max len of operator or variable name // todo rename
+
+const int NAMETABLE_CAPACITY = 10;
 
 typedef enum
 {
@@ -52,6 +54,12 @@ typedef enum
     UN_OP = 3, // unary operator
 } NodeType;
 
+struct NameTable
+{
+    char * table[NAMETABLE_CAPACITY];
+    int free;
+};
+
 struct NodeData
 {
     NodeType type;
@@ -69,6 +77,7 @@ struct TreeNode
 struct Tree
 {
     TreeNode * root;
+    NameTable nametable;
 
     int size;
 };
@@ -91,16 +100,19 @@ int       TraverseTree     (Tree * tree, NodeAction_t NodeAction, TraverseOrder 
 int       TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
 
 TreeNode * SubtreeFind (TreeNode * node, double val, NodeType type);
-TreeNode * TreeFind (Tree * tree, double val, NodeType type);
+TreeNode * TreeFind    (Tree * tree, double val, NodeType type);
 
-TreeNode * ReadSubtree (const char * infix_tree);
-Tree       ReadTree (const char * infix_tree);
-NodeData   ReadNodeData(const char * infix_tree, int * offset);
+Tree       ReadTree     (const char * infix_tree);
+TreeNode * ReadSubtree  (const char * infix_tree, NameTable * nametable, int * offset);
+NodeData   ReadNodeData (const char * infix_tree, NameTable * nametable, int * offset);
 
-int WriteSubtree(FILE * stream, const TreeNode * node);
-int WriteTree(FILE * stream, const Tree * tree);
-int WriteNodeData(FILE * stream, NodeData data);
+int WriteSubtree  (FILE * stream, const TreeNode * node);
+int WriteTree     (FILE * stream, const Tree * tree);
+int WriteNodeData (FILE * stream, NodeData data);
 
-int       PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) );
+int UpdNameTable     (NameTable * nametable, const char * word);
+int IncorrectVarName (const char * word);
+
+int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) );
 
 #endif // TREE_H

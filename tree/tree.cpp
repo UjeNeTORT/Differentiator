@@ -91,6 +91,12 @@ Tree TreeCtor (TreeNode * root)
 {
     Tree tree = { root, 0 };
 
+    for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
+    {
+        tree.nametable.table[i] = (char *) calloc(MAX_OP, sizeof(char));
+    }
+    tree.nametable.free = 0;
+
     return tree;
 }
 
@@ -100,6 +106,12 @@ int TreeDtor (Tree * tree)
 
     // traverse the tree and free each node
     TraverseTree(tree, TreeNodeDtor, POSTORDER);
+
+    for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
+    {
+        free(tree->nametable.table[i]);
+    }
+    tree->nametable.free = 0;
 
     return 0;
 }
@@ -246,7 +258,7 @@ TreeNode * TreeFind (Tree * tree, double val, NodeType type)
     return SubtreeFind (tree->root, val, type);
 }
 
-TreeNode * ReadSubtree (const char * infix_tree, int * offset)
+TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * offset)
 {
     assert(infix_tree);
 
@@ -271,15 +283,15 @@ TreeNode * ReadSubtree (const char * infix_tree, int * offset)
     TreeNode * node = TreeNodeCtor(0, NUM);
     *offset += 1;
 
-    node->left = ReadSubtree(infix_tree, offset);
+    node->left = ReadSubtree(infix_tree, nametable, offset);
 
-    node->data = ReadNodeData(infix_tree, offset);
+    node->data = ReadNodeData(infix_tree, nametable, offset);
 
-    node->right = ReadSubtree(infix_tree, offset);
+    node->right = ReadSubtree(infix_tree, nametable, offset);
 
-    while(infix_tree[(*offset)++] != ')')
+    while(infix_tree[*offset] != ')')
     {
-        ;
+        (*offset)++;
     }
 
     return node;
@@ -291,10 +303,14 @@ Tree ReadTree (const char * infix_tree)
 
     int offset = 0;
 
-    return TreeCtor(ReadSubtree(infix_tree, &offset));
+    Tree tree = TreeCtor(NULL);
+
+    tree.root = ReadSubtree(infix_tree, &tree.nametable, &offset);
+
+    return tree;
 }
 
-NodeData ReadNodeData(const char * infix_tree, int * offset)
+NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offset)
 {
     assert(infix_tree);
     assert(offset);
@@ -306,56 +322,62 @@ NodeData ReadNodeData(const char * infix_tree, int * offset)
         *offset += 1;
     }
 
-    char op_or_num[MAX_OP] = "";
+    char word[MAX_OP] = "";
 
     int addition = 0;
 
-    sscanf((infix_tree + *offset), "%s%n", op_or_num, &addition);
+    sscanf((infix_tree + *offset), "%s%n", word, &addition); // todo what if var name longer than MAX_OP
 
     *offset += addition;
 
-    if (data.val = atof(op_or_num))
+    if (data.val = atof(word))
     {
         return data;
     }
 
-    if (streq(op_or_num, "="))
+    if (streq(word, "="))
     {
         data.type = UN_OP;
         data.val = EQUAL;
     }
-    else if (streq(op_or_num, "+"))
+    else if (streq(word, "+"))
     {
         data.type = BI_OP;
         data.val = ADD;
     }
-    else if (streq(op_or_num, "-"))
+    else if (streq(word, "-"))
     {
         data.type = BI_OP;
         data.val = SUB;
     }
-    else if (streq(op_or_num, "*"))
+    else if (streq(word, "*"))
     {
         data.type = BI_OP;
         data.val = MUL;
     }
-    else if (streq(op_or_num, "/"))
+    else if (streq(word, "/"))
     {
         data.type = BI_OP;
         data.val = DIV;
     }
-    else if (streq(op_or_num, "^"))
+    else if (streq(word, "^"))
     {
         data.type = BI_OP;
         data.val = POW;
     }
-    else
+    else // variable
     {
-        // todo variables
+        if (IncorrectVarName((const char *) word))
+        {
+            fprintf(stderr, "ReadNodeData: incorrect variable name \"%s\"\n", word);
 
-        fprintf(stdout, "Unknown operator: %s\n", op_or_num);
+            abort();
+        }
 
-        abort();
+        int var_id = UpdNameTable(nametable, word);
+
+        data.type = VAR;
+        data.val  = var_id;
     }
 
     return data;
@@ -444,6 +466,35 @@ int WriteNodeData(FILE * stream, NodeData data)
             fprintf(stream, "UNKNOWN OPERATOR ");
 
             break;
+        }
+    }
+
+    return 0;
+}
+
+int UpdNameTable(NameTable * nametable, char * word)
+{
+    assert(word);
+
+    nametable->table[nametable->free] = word;
+
+    return nametable->free++;
+}
+
+int IncorrectVarName(const char * word)
+{
+    assert(word);
+
+    if (!isalpha(*word))
+    {
+        return 1;
+    }
+
+    while (*word++)
+    {
+        if (!isalnum(*word))
+        {
+            return 1;
         }
     }
 

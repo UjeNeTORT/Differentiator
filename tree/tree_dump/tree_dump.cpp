@@ -56,7 +56,7 @@ int DotTreePrint (const char * dot_fname, const Tree * tree)
     fprintf (dot_file, "digraph TREE {\n"
                         "bgcolor =\"%s\"", GRAPH_BGCLR);
 
-    DotSubtreePrint (dot_file, tree->root);
+    DotSubtreePrint (dot_file, tree->root, tree->nametable);
 
     fprintf (dot_file, "}\n");
 
@@ -104,7 +104,7 @@ int WriteHTML (const char * HTML_fname, int dump_id)
     return 0;
 }
 
-int DotSubtreePrint (FILE * stream, const TreeNode * node)
+int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 {
     assert (stream);
 
@@ -128,7 +128,7 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node)
 
     case VAR: // ! doestn work
         color = GRAPH_VARCLR;
-        sprintf(node_data, "du hast"); // get varname from nametable
+        sprintf(node_data, "%s", nametable.table[(int) node->data.val]); // get varname from nametable
         break;
 
     case BI_OP:
@@ -183,10 +183,10 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node)
 
     fprintf (stream, "\tnode_%d [style = filled, shape = circle, label = \"%s\", fillcolor = \"%s\", fontcolor = \"%s\"];\n", node_id, node_data, color, GRAPH_TEXTCLR);
 
-    if (int left_subtree_id = DotSubtreePrint (stream, node->left))
+    if (int left_subtree_id = DotSubtreePrint (stream, node->left, nametable))
         fprintf (stream, "\tnode_%d -> node_%d;\n", node_id, left_subtree_id);
 
-    if (int right_subtree_id = DotSubtreePrint (stream, node->right))
+    if (int right_subtree_id = DotSubtreePrint (stream, node->right, nametable))
         fprintf (stream, "\tnode_%d -> node_%d;\n", node_id, right_subtree_id);
 
     return node_id;
@@ -202,7 +202,7 @@ int DotTreeDetailedPrint (const char * dot_fname, const Tree * tree)
     fprintf (dot_file, "digraph DETAILED_TREE {\n"
                         "bgcolor =\"%s\"", GRAPH_BGCLR);
 
-    DotSubtreeDetailedPrint(dot_file, (const TreeNode *) tree->root);
+    DotSubtreeDetailedPrint(dot_file, (const TreeNode *) tree->root, tree->nametable);
 
     fprintf (dot_file, "}");
 
@@ -212,7 +212,7 @@ int DotTreeDetailedPrint (const char * dot_fname, const Tree * tree)
     return 0;
 }
 
-int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node)
+int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nametable)
 {
     assert(stream);
 
@@ -250,10 +250,10 @@ int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node)
     fprintf (stream, "\tdetailed_node_%d [style = filled, shape = record, fillcolor = \"%s\", fontcolor = \"%s\"];\n", node_id, color, GRAPH_TEXTCLR);
     fprintf (stream, "\tdetailed_node_%d [label = \"{type = %d | val = %.3lf}\"];\n", node_id, node->data.type, node->data.val);
 
-    if (int left_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->left))
+    if (int left_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->left, nametable))
         fprintf (stream, "\tdetailed_node_%d -> detailed_node_%d;\n", node_id, left_subtree_id);
 
-    if (int right_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->right))
+    if (int right_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->right, nametable))
         fprintf (stream, "\tdetailed_node_%d -> detailed_node_%d;\n", node_id, right_subtree_id);
 
     return node_id;
