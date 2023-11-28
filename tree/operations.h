@@ -1,6 +1,8 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
 
+const int ILL_OPNUM = 1000;
+
 typedef enum
 {
     EQUAL = 0,
@@ -26,7 +28,6 @@ typedef enum
     LN   = 20,
 } Opcodes;
 
-
 typedef enum
 {
     ERR   = 0,
@@ -38,34 +39,35 @@ typedef enum
 
 struct Operation
 {
-    Opcodes opcode;
+    Opcodes      opcode;
     const char * name;
-    NodeType type; // binary or unary
+    NodeType     type; // binary or unary
+    int          priority;
 };
 
 const Operation OPERATIONS[] = // codestyle?
 {
-    {EQUAL, "=",      UN_OP},
-    {ADD,   "+",      BI_OP},
-    {SUB,   "-",      BI_OP},
-    {MUL,   "*",      BI_OP},
-    {DIV,   "/",      BI_OP},
-    {POW,   "^",      BI_OP},
-    {EXP,   "exp",    UN_OP},
-    {SIN,   "sin",    UN_OP},
-    {COS,   "cos",    UN_OP},
-    {TG,    "tg",     UN_OP},
-    {CTG,   "ctg",    UN_OP},
-    {ASIN,  "arcsin", UN_OP},
-    {ACOS,  "arccos", UN_OP},
-    {ATG,   "arctg",  UN_OP},
-    {ACTG,  "arcctg", UN_OP},
-    {SH,    "sh",     UN_OP},
-    {CH,    "ch",     UN_OP},
-    {TH,    "th",     UN_OP},
-    {CTH,   "cth",    UN_OP},
-    {LOG,   "log",    BI_OP},
-    {LN,    "ln",     UN_OP}
+    {EQUAL, "=",      UN_OP, 0},
+    {ADD,   "+",      BI_OP, 1},
+    {SUB,   "-",      BI_OP, 1},
+    {MUL,   "*",      BI_OP, 2},
+    {DIV,   "/",      BI_OP, 2},
+    {POW,   "^",      BI_OP, 3},
+    {EXP,   "exp",    UN_OP, 4},
+    {LN,    "ln",     UN_OP, 4},
+    {SIN,   "sin",    UN_OP, 4},
+    {COS,   "cos",    UN_OP, 4},
+    {TG,    "tg",     UN_OP, 4},
+    {CTG,   "ctg",    UN_OP, 4},
+    {ASIN,  "arcsin", UN_OP, 4},
+    {ACOS,  "arccos", UN_OP, 4},
+    {ATG,   "arctg",  UN_OP, 4},
+    {ACTG,  "arcctg", UN_OP, 4},
+    {SH,    "sh",     UN_OP, 4},
+    {CH,    "ch",     UN_OP, 4},
+    {TH,    "th",     UN_OP, 4},
+    {CTH,   "cth",    UN_OP, 4},
+    {LOG,   "log",    BI_OP, 4},
 };
 
 const int OPERATIONS_NUM = sizeof(OPERATIONS) / sizeof(Operation);
