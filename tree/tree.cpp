@@ -29,6 +29,46 @@ double Eval (const TreeNode * node)
         return node->data.val;
     }
 
+    if (node->data.type == UN_OP)
+    {
+        double right = Eval(node->right);
+
+        switch ((int) node->data.val)
+        {
+        case EXP:
+            return pow(EXPONENT, right);
+        case LN:
+            return log(right);
+        case SIN:
+            return sin(right);
+        case COS:
+            return cos(right);
+        case TG:
+            return tan(right);
+        case CTG:
+            return 1 / tan(right);
+        case ASIN:
+            return asin(right);
+        case ACOS:
+            return acos(right);
+        case ATG:
+            return atan(right);
+        case ACTG:
+            return PI / 2 - atan(right);
+        case SH:
+            return sinh(right);
+        case CH:
+            return cosh(right);
+        case TH:
+            return tanh(right);
+        case CTH:
+            return 1 / tanh(right);
+
+        default: // ! not finished
+            // todo
+            break;
+        }
+    }
     if (node->data.type == BI_OP)
     {
         double left  = Eval(node->left);
@@ -46,7 +86,8 @@ double Eval (const TreeNode * node)
             return left / right;
         case POW:
             return pow(left,right);
-        default:
+        default: // ! not finished
+            // todo
             break;
         }
 

@@ -26,6 +26,9 @@ const int NAMETABLE_CAPACITY = 10;
 
 const double EPS = 1e-7;
 
+const double EXPONENT = 2.718281828;
+const double PI       = 3.141592654;
+
 typedef enum
 {
     PREORDER  = -1,
