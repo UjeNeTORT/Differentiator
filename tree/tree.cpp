@@ -105,7 +105,7 @@ int TreeDtor (Tree * tree)
 
     // traverse the tree and free each node
     TraverseTree(tree, TreeNodeDtor, POSTORDER);
-
+    PRINTF_DEBUG("freeing nametable\n");
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
         free(tree->nametable.table[i]); //? do i even need this loop?
@@ -182,6 +182,36 @@ int TreeHangNode (Tree * tree, TreeNode * node, TreeNode * new_node, NodeLocatio
     tree->size++;
 
     return ret_val;
+}
+
+Tree TreeCopy (Tree * tree)
+{
+    assert(tree);
+
+    Tree copied = TreeCtor(NULL);
+    copied.root = SubtreeCopy(tree->root);
+    PRINTF_DEBUG("%p", &copied.root);
+    for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
+    {
+        memcpy(copied.nametable.table[i], tree->nametable.table[i], sizeof(tree->nametable.table[i]));
+    }
+    copied.nametable.free = tree->nametable.free;
+
+    copied.size = tree->size;
+
+    return copied;
+}
+
+TreeNode * SubtreeCopy (TreeNode * node)
+{
+    if (!node) return NULL;
+
+    TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type);
+
+    copied->left  = SubtreeCopy(node->left);
+    copied->right = SubtreeCopy(node->right);
+
+    return copied;
 }
 
 int TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
@@ -403,6 +433,8 @@ int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
 {
     assert(stream);
 
+    int opnum = -1;
+
     if (data.type == NUM)
     {
         fprintf(stream, "%lf ", data.val);
@@ -415,44 +447,11 @@ int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
     }
     else if (data.type == BI_OP || data.type == UN_OP)
     {
-        // ! cringe code
-        switch ((int) data.val)
-        {
-        case EQUAL:
-            fprintf(stream, "= ");
-
-            break;
-
-        case ADD:
-            fprintf(stream, "+ ");
-
-            break;
-
-        case SUB:
-            fprintf(stream, "- ");
-
-            break;
-
-        case MUL:
-            fprintf(stream, "* ");
-
-            break;
-
-        case DIV:
-            fprintf(stream, "/ ");
-
-            break;
-
-        case POW:
-            fprintf(stream, "^ ");
-
-            break;
-
-        default:
-            fprintf(stream, "UNKNOWN OPERATOR ");
-
-            break;
-        }
+        opnum = FindOperation((int) data.val);
+        if (opnum != ILL_OPNUM)
+            fprintf(stream, " %s ", OPERATIONS[opnum].name);
+        else
+            fprintf(stream, "UNKNOWN OPERATOR");
     }
 
     return 0;
@@ -544,6 +543,19 @@ int ReadAssignDouble (NodeData * data, char * word)
     return 0; // didnt assign double to data
 }
 
+int FindOperation (int opcode)
+{
+    for (int i = 0; i < OPERATIONS_NUM; i++)
+    {
+        if (opcode == OPERATIONS[i].opcode)
+        {
+            return i;
+        }
+    }
+
+    return ILL_OPNUM;
+}
+
 int IsDouble (char * word) // ! WARNING crutch function
 {
     assert(word);
@@ -575,7 +587,7 @@ int PrintfDebug (const char * funcname, int line, const char * filename, const c
 
     va_end(ptr);
 
-    fprintf(stdout, RST_CLR "\n " );
+    fprintf(stdout, RST_CLR "\n" );
 
     return res;
 }
