@@ -268,6 +268,8 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
     const char * color = "";
     char node_data[MAX_OP] = "";
 
+    int opnum = 0;
+
     switch (node->data.type)
     {
     case NUM:
@@ -282,44 +284,17 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 
     case BI_OP:
         color = GRAPH_OPCLR;
-        //! copypaste
-        switch ((int) node->data.val)
-        {
-            case ADD:
-                sprintf(node_data, "+");
-                break;
 
-            case SUB:
-                sprintf(node_data, "-");
-                break;
+        opnum = FindOperation((int) node->data.val);
+        sprintf(node_data, "%s", OPERATIONS[opnum].name);
 
-            case MUL:
-                sprintf(node_data, "*");
-                break;
-
-            case DIV:
-                sprintf(node_data, "/");
-                break;
-
-            case POW:
-                sprintf(node_data, "^");
-                break;
-
-            default:
-                fprintf(stdout, "Err wrong opcode\n");
-                break;
-        }
         break;
 
     case UN_OP: // ! doesnt work
         color = GRAPH_OPCLR;
 
-        switch ((int) node->data.val)
-        {
-            case EQUAL:
-                sprintf(node_data, "=");
-                break;
-        }
+        opnum = FindOperation((int) node->data.val);
+        sprintf(node_data, "%s", OPERATIONS[opnum].name);
         break;
     }
 
