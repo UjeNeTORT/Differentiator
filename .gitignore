@@ -33,3 +33,10 @@
 
 # other
 test.cpp
+*.aux
+*.log
+*.pdf
+*.dot
+*.png
+*.tex
+*.html
