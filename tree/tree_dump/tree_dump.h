@@ -46,8 +46,6 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable);
 int DotTreeDetailedPrint    (const char * dot_fname, const Tree * tree);
 int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nametable);
 
-int FindOperation (int opcode);
-
 char * GetFilePath (const char * path, const char * fname);
 
 #endif // TREE_DUMP_H

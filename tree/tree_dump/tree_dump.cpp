@@ -196,7 +196,7 @@ int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node
             break;
 
         case VAR:
-            fprintf(stream, " {%s} ", nametable.table[(int) node->data.val]);
+            fprintf(stream, " {%s} ", nametable.names[(int) node->data.val]);
             break;
 
         case UN_OP:
@@ -278,7 +278,7 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 
     case VAR:
         color = GRAPH_VARCLR;
-        sprintf(node_data, "%s", nametable.table[(int) node->data.val]); // get varname from nametable
+        sprintf(node_data, "%s", nametable.names[(int) node->data.val]); // get varname from nametable
         break;
 
     case BI_OP:
@@ -373,19 +373,6 @@ int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nam
         fprintf (stream, "\tdetailed_node_%d -> detailed_node_%d;\n", node_id, right_subtree_id);
 
     return node_id;
-}
-
-int FindOperation (int opcode)
-{
-    for (int i = 0; i < OPERATIONS_NUM; i++)
-    {
-        if (opcode == OPERATIONS[i].opcode)
-        {
-            return i;
-        }
-    }
-
-    return ILL_OPNUM;
 }
 
 char * GetFilePath(const char * path, const char * fname)
