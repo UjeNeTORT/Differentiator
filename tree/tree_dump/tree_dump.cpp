@@ -62,10 +62,10 @@ int TreeDotDump (const char * HTML_fname, const Tree * tree)
     DotTreeDetailedPrint (detailed_dot_fname, tree);
 
     char command[COMMAND_BUF_SIZE] = "";
-    sprintf (command, "dot -Tpng %s%s -o %sgraph_dump_%d.png", DOT_FILE_PATH, dot_fname, GRAPH_PNGS_PATH, dump_id);
+    sprintf (command, "dot -Tsvg %s%s -o %sgraph_dump_%d.svg", DOT_FILE_PATH, dot_fname, GRAPH_SVGS_PATH, dump_id);
     system (command);
 
-    sprintf (command, "dot -Tpng %s%s -o %sdetailed_graph_dump_%d.png", DOT_FILE_PATH, detailed_dot_fname, GRAPH_PNGS_PATH, dump_id);
+    sprintf (command, "dot -Tsvg %s%s -o %sdetailed_graph_dump_%d.svg", DOT_FILE_PATH, detailed_dot_fname, GRAPH_SVGS_PATH, dump_id);
     system (command);
 
     WriteHTML(HTML_fname, dump_id);
@@ -148,7 +148,7 @@ int WriteHTML (const char * HTML_fname, int dump_id)
 
     fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE</p>", "#283D3B", asctime(loc_time));
 
-    fprintf (HTML_file, "<img src=\"../../../../%sgraph_dump_%d.png\">\n", GRAPH_PNGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
+    fprintf (HTML_file, "<img src=\"../../../../%sgraph_dump_%d.svg\">\n", GRAPH_SVGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
 
     fprintf(HTML_file, "</div>\n");
 
@@ -156,7 +156,7 @@ int WriteHTML (const char * HTML_fname, int dump_id)
 
     fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE DETAILED </p>", "#283D3B", asctime(loc_time));
 
-    fprintf (HTML_file, "<img src=\"../../../../%sdetailed_graph_dump_%d.png\">\n", GRAPH_PNGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
+    fprintf (HTML_file, "<img src=\"../../../../%sdetailed_graph_dump_%d.svg\">\n", GRAPH_SVGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
 
     fprintf(HTML_file, "</div>\n");
 
@@ -205,9 +205,8 @@ int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node
 
             if (!streq(op_name, "="))
             {
-                fprintf(stream, " \\%s( ", op_name);
+                fprintf(stream, " \\%s ", op_name);
                 TexSubtreePrint(stream, node, node->right, nametable);
-                fprintf(stream, " ) ");
             }
             else
             {

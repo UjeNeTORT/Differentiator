@@ -15,7 +15,7 @@
 #include "../tree.h"
 
 const char DOT_FILE_PATH[]   = "tree/tree_dump/dumps/dot_files/";
-const char GRAPH_PNGS_PATH[] = "tree/tree_dump/dumps/png/";
+const char GRAPH_SVGS_PATH[] = "tree/tree_dump/dumps/png/";
 const char HTML_DUMPS_PATH[] = "tree/tree_dump/dumps/dumps/";
 const char TEX_FILE_PATH[]   = "tree/tree_dump/dumps/tex/";
 const char PDF_DUMPS_PATH[]  = "tree/tree_dump/dumps/pdf";
