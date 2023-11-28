@@ -18,20 +18,26 @@
 #include "../colors.h"
 #include "tree.h"
 
-double Eval (const TreeNode * node)
+double Eval (const TreeNode * node, const NameTable * nametable)
 {
     assert(node);
 
     // todo change assert to if !node
 
-    if (node->data.type == NUM)
-    {
-        return node->data.val;
-    }
+    double left  = 0;
+    double right = 0;
 
-    if (node->data.type == UN_OP)
+    switch (node->data.type)
     {
-        double right = Eval(node->right);
+
+    case NUM:
+        return node->data.val;
+
+    case VAR:
+        return nametable->vals[(int) node->data.val];
+
+    case UN_OP:
+        right = Eval(node->right, nametable);
 
         switch ((int) node->data.val)
         {
@@ -68,11 +74,12 @@ double Eval (const TreeNode * node)
             // todo
             break;
         }
-    }
-    if (node->data.type == BI_OP)
-    {
-        double left  = Eval(node->left);
-        double right = Eval(node->right);
+
+        return 0;
+
+    case BI_OP:
+        left  = Eval(node->left, nametable);
+        right = Eval(node->right, nametable);
 
         switch ((int) node->data.val)
         {
@@ -90,13 +97,6 @@ double Eval (const TreeNode * node)
             // todo
             break;
         }
-
-        return 0;
-    }
-
-    if (node->data.type == UN_OP)
-    {
-        double left = Eval(node->left);
 
         return 0;
     }
@@ -133,7 +133,7 @@ Tree TreeCtor (TreeNode * root)
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        tree.nametable.table[i] = (char *) calloc(MAX_OP, sizeof(char));
+        tree.nametable.names[i] = (char *) calloc(MAX_OP, sizeof(char));
     }
     tree.nametable.free = 0;
 
@@ -149,7 +149,7 @@ int TreeDtor (Tree * tree)
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        free(tree->nametable.table[i]); //? do i even need this loop?
+        free(tree->nametable.names[i]); //? do i even need this loop?
     }
     tree->nametable.free = 0;
 
@@ -231,10 +231,11 @@ Tree TreeCopy (Tree * tree)
 
     Tree copied = TreeCtor(NULL);
     copied.root = SubtreeCopy(tree->root);
-    PRINTF_DEBUG("%p", &copied.root);
+
     for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        memcpy(copied.nametable.table[i], tree->nametable.table[i], sizeof(tree->nametable.table[i]));
+        memcpy(copied.nametable.names[i], tree->nametable.names[i], sizeof(tree->nametable.names[i]));
+        copied.nametable.vals[i] = tree->nametable.vals[i];
     }
     copied.nametable.free = tree->nametable.free;
 
@@ -484,7 +485,7 @@ int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
     }
     else if (data.type == VAR)
     {
-        fprintf(stream, "%s ", nametable->table[(int) data.val]);
+        fprintf(stream, "%s ", nametable->names[(int) data.val]);
     }
     else if (data.type == BI_OP || data.type == UN_OP)
     {
@@ -502,8 +503,7 @@ int UpdNameTable(NameTable * nametable, char * word)
 {
     assert(word);
 
-    strcpy(nametable->table[nametable->free], word);
-
+    strcpy(nametable->names[nametable->free], word);
     return nametable->free++;
 }
 
@@ -541,7 +541,17 @@ int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
         return 0;
     }
 
-    int var_id = UpdNameTable(nametable, word);
+    int var_id = -1;
+
+    if ((var_id = FindNametableDups(nametable, word)) == -1) // no dups
+    {
+        var_id = UpdNameTable(nametable, word);
+
+        if (!ScanVariableVal(nametable, var_id))
+        {
+            return 0; // error code not documented
+        }
+    }
 
     data->type = VAR;
     data->val  = var_id;
@@ -584,6 +594,15 @@ int ReadAssignDouble (NodeData * data, char * word)
     return 0; // didnt assign double to data
 }
 
+int ScanVariableVal (NameTable * nametable, int var_id)
+{
+    assert(nametable);
+
+    fprintf(stdout, "Please specify variable \"%s\"\n>> ", nametable->names[var_id]);
+
+    return fscanf(stdin, "%lf", &nametable->vals[var_id]);
+}
+
 int FindOperation (int opcode)
 {
     for (int i = 0; i < OPERATIONS_NUM; i++)
@@ -595,6 +614,20 @@ int FindOperation (int opcode)
     }
 
     return ILL_OPNUM;
+}
+
+int FindNametableDups(NameTable * nametable, const char * word)
+{
+    assert(nametable);
+    assert(word);
+
+    for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
+    {
+        if (streq(nametable->names[i], word))
+            return i; // duplicate id
+    }
+
+    return -1; // no duplicates
 }
 
 int IsDouble (char * word) // ! WARNING crutch function

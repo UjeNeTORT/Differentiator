@@ -45,8 +45,9 @@ typedef enum
 
 struct NameTable
 {
-    char * table[NAMETABLE_CAPACITY];
-    int free;
+    char * names [NAMETABLE_CAPACITY];
+    double vals  [NAMETABLE_CAPACITY];
+    int    free;
 };
 
 struct NodeData
@@ -73,7 +74,7 @@ struct Tree
 
 typedef int (* NodeAction_t) (TreeNode * node);
 
-double Eval (const TreeNode * node);
+double Eval (const TreeNode * node, const NameTable * nametable);
 
 TreeNode* TreeNodeCtor (double val, NodeType type);
 int       TreeNodeDtor (TreeNode * node);
@@ -108,7 +109,11 @@ int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable);
 int ReadAssignOperator (NodeData * data, char * word);
 int ReadAssignDouble   (NodeData * data, char * word);
 
+int ScanVariableVal (NameTable * nametable, int var_id);
+
 int FindOperation (int opcode);
+
+int FindNametableDups(NameTable * nametable, const char * word);
 
 int IsDouble (char * word); // ! WARNING cructh function
 
