@@ -575,7 +575,7 @@ int PrintfDebug (const char * funcname, int line, const char * filename, const c
 
     va_end(ptr);
 
-    fprintf(stdout, "\n " RST_CLR);
+    fprintf(stdout, RST_CLR "\n " );
 
     return res;
 }
