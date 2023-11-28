@@ -105,7 +105,7 @@ int TreeDtor (Tree * tree)
 
     // traverse the tree and free each node
     TraverseTree(tree, TreeNodeDtor, POSTORDER);
-    PRINTF_DEBUG("freeing nametable\n");
+
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
         free(tree->nametable.table[i]); //? do i even need this loop?
