@@ -83,7 +83,7 @@ typedef int (* NodeAction_t) (TreeNode * node);
 
 double Eval (const TreeNode * node, const NameTable * nametable);
 
-TreeNode* TreeNodeCtor (double val, NodeType type);
+TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * right);
 int       TreeNodeDtor (TreeNode * node);
 
 Tree      TreeCtor     (TreeNode * root);

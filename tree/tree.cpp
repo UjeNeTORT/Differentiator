@@ -104,13 +104,13 @@ double Eval (const TreeNode * node, const NameTable * nametable)
     return 0;
 }
 
-TreeNode* TreeNodeCtor (double val, NodeType type)
+TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * right)
 {
     TreeNode * new_node = (TreeNode *) calloc(1, sizeof(TreeNode));
 
     new_node->data  = {type, val};
-    new_node->left  = NULL;
-    new_node->right = NULL;
+    new_node->left  = left;
+    new_node->right = right;
 
     return new_node;
 }
@@ -248,10 +248,8 @@ TreeNode * SubtreeCopy (TreeNode * node)
 {
     if (!node) return NULL;
 
-    TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type);
-
-    copied->left  = SubtreeCopy(node->left);
-    copied->right = SubtreeCopy(node->right);
+    TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type,
+                                        SubtreeCopy(node->left), SubtreeCopy(node->right));
 
     return copied;
 }
@@ -351,7 +349,7 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
         abort();
     }
 
-    TreeNode * node = TreeNodeCtor(0, NUM);
+    TreeNode * node = TreeNodeCtor(0, NUM, NULL, NULL);
     *offset += 1; // skip (
 
     node->left = ReadSubtree(infix_tree, nametable, offset);
