@@ -246,11 +246,15 @@ int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node
             if (print_parenthesis)
                 fprintf(stream, " ( ");
 
+            if (OPERATIONS[opnum].opcode == DIV)
+                fprintf(stream, "\\frac");
+
             fprintf(stream, " { ");
             TexSubtreePrint(stream, node, node->left, nametable);
             fprintf(stream, " } ");
 
-            fprintf(stream, " %s ", OPERATIONS[opnum].name);
+            if (OPERATIONS[opnum].opcode != DIV)
+                fprintf(stream, " %s ", OPERATIONS[opnum].name);
 
             fprintf(stream, " { ");
             TexSubtreePrint(stream, node, node->right, nametable);
