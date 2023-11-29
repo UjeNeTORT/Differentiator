@@ -234,12 +234,7 @@ Tree* TreeCopy (const Tree * tree)
     Tree* copied = TreeCtor(NULL);
     copied->root = SubtreeCopy(tree->root);
 
-    for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
-    {
-        memcpy(copied->nametable.names[i], tree->nametable.names[i], sizeof(tree->nametable.names[i]));
-        copied->nametable.vals[i] = tree->nametable.vals[i];
-    }
-    copied->nametable.free = tree->nametable.free;
+    NameTableCopy(&copied->nametable, &tree->nametable);
 
     copied->size = tree->size;
 
@@ -254,6 +249,21 @@ TreeNode * SubtreeCopy (TreeNode * node)
                                         SubtreeCopy(node->left), SubtreeCopy(node->right));
 
     return copied;
+}
+
+int NameTableCopy (NameTable * dst, const NameTable * src)
+{
+    assert(dst);
+    assert(src);
+
+    for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
+    {
+        dst->names[i] = strdup(src->names[i]);
+        dst->vals[i]  = src->vals[i];
+    }
+    dst->free = src->free;
+
+    return 0;
 }
 
 int TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
