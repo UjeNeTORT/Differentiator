@@ -51,8 +51,8 @@ TreeNode * derivative (const TreeNode * node) // ? naming
         return _DIV(_SUB(_MUL(dL, cR), _MUL(cL, dR)), _POW(cR, _NUM(2)));
 
     case POW:
-        // return _POW()
-        break;
+        return _MUL(_ADD(_MUL(dR, _LN(cL)), _DIV(_MUL(dL, cR), cL)), _POW(cL, cR));
+
 
     default:
         break;

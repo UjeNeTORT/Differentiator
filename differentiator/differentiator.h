@@ -30,6 +30,8 @@
 #define _DIV(LEFT, RIGHT) TreeNodeCtor(DIV, BI_OP, LEFT, RIGHT)
 #define _POW(LEFT, RIGHT) TreeNodeCtor(POW, BI_OP, LEFT, RIGHT)
 
+#define _LN(RIGHT)        TreeNodeCtor(LN,  UN_OP, NULL, RIGHT)
+
 // ===============================================
 
 Tree     * derivative (const Tree * tree);
