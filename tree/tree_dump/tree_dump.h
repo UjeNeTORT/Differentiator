@@ -32,11 +32,23 @@ const char GRAPH_NUMCLR[]  = "#197278";
 const char GRAPH_OPCLR[]   = "#C44536";
 const char GRAPH_VARCLR[]  = "#283D3B";
 
-int TreeTexDump     (const char * PDF_fname, const Tree * tree);
+typedef enum
+{
+    TEX_PRINT_SUCCESS = 0,
+    TEX_PRINT_ERR     = 1,
+} TexTreePrintRes;
+
+typedef enum
+{
+    DOT_PRINT_SUCCESS = 0,
+    DOT_PRINT_ERR     = 1,
+} DotTreePrintRes;
+
+int TreeTexDump     (const Tree * tree);
 int TreeDotDump     (const char * fname, const Tree * tree);
 
-int TexTreePrint    (const char * tex_fname, const Tree * tree);
-int DotTreePrint    (const char * dot_fname, const Tree * tree);
+TexTreePrintRes TexTreePrint    (const char * tex_fname, const Tree * tree);
+DotTreePrintRes DotTreePrint    (const char * dot_fname, const Tree * tree);
 
 int WriteHTML       (const char * HTML_fname, int dump_id);
 

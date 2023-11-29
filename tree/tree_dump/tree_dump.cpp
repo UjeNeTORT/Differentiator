@@ -16,9 +16,8 @@
 
 #include "tree_dump.h"
 
-int TreeTexDump (const char * PDF_fname, const Tree * tree)
+int TreeTexDump (const Tree * tree)
 {
-    assert(PDF_fname);
     assert(tree);
 
     srand(time(0));
@@ -28,9 +27,13 @@ int TreeTexDump (const char * PDF_fname, const Tree * tree)
     char tex_fname[MAX_TREE_FNAME] = "";
     sprintf(tex_fname, "expr_%d.tex", dump_id);
 
-    TexTreePrint(tex_fname, tree);
+    if (TexTreePrint(tex_fname, tree) != TEX_PRINT_SUCCESS)
+    {
+        RET_ERROR(-1, "Tree wasnt printed");
+    }
 
     char * tex_path = GetFilePath(TEX_FILE_PATH, tex_fname);
+
     char command[COMMAND_BUF_SIZE] = "";
     sprintf(command, "pdflatex -output-directory=%s %s ", PDF_DUMPS_PATH, tex_path);
     system(command);
@@ -73,47 +76,60 @@ int TreeDotDump (const char * HTML_fname, const Tree * tree)
     return dump_id;
 }
 
-int TexTreePrint (const char * tex_fname, const Tree * tree)
+TexTreePrintRes TexTreePrint (const char * tex_fname, const Tree * tree)
 {
-    assert(tex_fname);
-    assert(tree);
+    assert (tex_fname);
+    assert (tree);
 
-    char * tex_path = GetFilePath(TEX_FILE_PATH, tex_fname);
+    if (!tex_fname) RET_ERROR(TEX_PRINT_ERR, "Tex filename null pointer");
+    if (!tree)      RET_ERROR(TEX_PRINT_ERR, "Tree null pointer");
 
-    FILE * tex_file = fopen(tex_path, "wb");
+    char * tex_path = GetFilePath (TEX_FILE_PATH, tex_fname);
 
-    time_t t = time(NULL);
-    tm * loc_time = localtime(&t);
+    FILE * tex_file = fopen (tex_path, "wb");
 
-    fprintf(tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
-                       "\\usepackage{amsmath}\n"
-                       "\\DeclareMathOperator\\arcctan{arcctan}\n"
-                       "\\title{EXPRESSION DUMP}\n"
-                       "\\author{Tikhonov Yaroslav (aka UjeNeTORT)}\n"
-                       "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
-                       "\\begin{document}\n"
-                       "\\maketitle\n",
+    time_t t = time (NULL);
+    tm * loc_time = localtime (&t);
+
+    fprintf (tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
+                        "\\usepackage{amsmath}\n"
+                        "\\DeclareMathOperator\\arcctan{arcctan}\n"
+                        "\\title{EXPRESSION DUMP}\n"
+                        "\\author{Tikhonov Yaroslav (aka UjeNeTORT)}\n"
+                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
+                        "\\begin{document}\n"
+                        "\\maketitle\n",
                         loc_time->tm_mday, loc_time->tm_mon + 1, loc_time->tm_year + 1900,
                         loc_time->tm_hour, loc_time->tm_min, loc_time->tm_sec);
 
     fprintf(tex_file, "$$   ");
 
-    TexSubtreePrint (tex_file, tree->root, tree->root->right, tree->nametable);
+    if (tree->root)
+        TexSubtreePrint (tex_file, tree->root, tree->root->right, tree->nametable);
+    else
+    {
+        // it is not in the beginning because we may still need other info about the tree
+        // apart from tree being shown itself
+        free (tex_path);
+        RET_ERROR (TEX_PRINT_ERR, "Tree root null pointer");
+    }
 
-    fprintf(tex_file, "$$    \n");
+    fprintf (tex_file, "   $$\n");
 
-    fprintf(tex_file, "\\end{document}\n");
-    fclose(tex_file);
+    fprintf (tex_file, "\\end{document}\n");
+    fclose (tex_file);
 
-    free(tex_path);
+    free (tex_path);
 
-    return 0;
+    return TEX_PRINT_SUCCESS;
 }
 
-int DotTreePrint (const char * dot_fname, const Tree * tree)
+DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
 {
     assert(dot_fname);
     assert(tree);
+    if (!dot_fname) RET_ERROR(DOT_PRINT_ERR, "Tex filename null pointer\n");
+    if (!tree)      RET_ERROR(DOT_PRINT_ERR, "Tree null pointer\n");
 
     char * dot_path = GetFilePath(DOT_FILE_PATH, dot_fname);
 
@@ -130,7 +146,7 @@ int DotTreePrint (const char * dot_fname, const Tree * tree)
 
     free(dot_path);
 
-    return 0;
+    return DOT_PRINT_SUCCESS;
 }
 
 int WriteHTML (const char * HTML_fname, int dump_id)
