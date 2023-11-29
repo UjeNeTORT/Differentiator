@@ -19,8 +19,12 @@
 #define PRINTF_DEBUG(format, ...) \
     PrintfDebug (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
 
-#define PRINTF_ERROR(format, ...) \
-    PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
+#define ERROR(format, ...) \
+    PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__) \
+
+#define RET_ERROR(err_code, format, ...) \
+    { PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__); \
+      return err_code;}
 
 const int MAX_TREE = 5000;
 const int MAX_OP   = 10; // max len of operator or variable name // todo rename
