@@ -127,15 +127,15 @@ int TreeNodeDtor (TreeNode * node)
     return 0;
 }
 
-Tree TreeCtor (TreeNode * root)
+Tree * TreeCtor (TreeNode * root)
 {
-    Tree tree = { root, 0 };
+    Tree * tree = (Tree *) calloc(1, sizeof(Tree));
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        tree.nametable.names[i] = (char *) calloc(MAX_OP, sizeof(char));
+        tree->nametable.names[i] = (char *) calloc(MAX_OP, sizeof(char));
     }
-    tree.nametable.free = 0;
+    tree->nametable.free = 0;
 
     return tree;
 }
@@ -152,6 +152,8 @@ int TreeDtor (Tree * tree)
         free(tree->nametable.names[i]); //? do i even need this loop?
     }
     tree->nametable.free = 0;
+
+    free(tree);
 
     return 0;
 }
@@ -225,21 +227,21 @@ int TreeHangNode (Tree * tree, TreeNode * node, TreeNode * new_node, NodeLocatio
     return ret_val;
 }
 
-Tree TreeCopy (Tree * tree)
+Tree* TreeCopy (const Tree * tree)
 {
     assert(tree);
 
-    Tree copied = TreeCtor(NULL);
-    copied.root = SubtreeCopy(tree->root);
+    Tree* copied = TreeCtor(NULL);
+    copied->root = SubtreeCopy(tree->root);
 
     for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        memcpy(copied.nametable.names[i], tree->nametable.names[i], sizeof(tree->nametable.names[i]));
-        copied.nametable.vals[i] = tree->nametable.vals[i];
+        memcpy(copied->nametable.names[i], tree->nametable.names[i], sizeof(tree->nametable.names[i]));
+        copied->nametable.vals[i] = tree->nametable.vals[i];
     }
-    copied.nametable.free = tree->nametable.free;
+    copied->nametable.free = tree->nametable.free;
 
-    copied.size = tree->size;
+    copied->size = tree->size;
 
     return copied;
 }
@@ -368,20 +370,20 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
     return node;
 }
 
-Tree ReadTree (const char * infix_tree)
+Tree* ReadTree (const char * infix_tree)
 {
     assert(infix_tree);
 
     int offset = 0;
 
-    Tree tree = TreeCtor(NULL);
+    Tree* tree = TreeCtor(NULL);
 
-    tree.root = ReadSubtree(infix_tree, &tree.nametable, &offset);
+    tree->root = ReadSubtree(infix_tree, &tree->nametable, &offset);
 
     return tree;
 }
 
-Tree ReadTree (FILE * stream)
+Tree* ReadTree (FILE * stream)
 {
     assert(stream);
 
@@ -390,7 +392,7 @@ Tree ReadTree (FILE * stream)
     fgets(infix_tree, MAX_TREE, stream);
     infix_tree[(strcspn(infix_tree, "\r\n"))] = 0;
 
-    Tree readen = ReadTree((const char *) infix_tree);
+    Tree* readen = ReadTree((const char *) infix_tree);
 
     free(infix_tree);
 
