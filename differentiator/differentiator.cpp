@@ -18,10 +18,10 @@ Tree * derivative (const Tree * tree)
     assert(tree);
     if (!tree) RET_ERROR(NULL, "Tree null pointer");
 
-    Tree * tree_derivative = TreeCopy(tree);
-    TreeNodeDtor(tree_derivative->root);
+    Tree * tree_derivative = (Tree *) calloc(1, sizeof(Tree));
 
     tree_derivative->root = TreeNodeCtor(EQUAL, UN_OP, NULL, d(tree->root));
+    NameTableCopy (&tree_derivative->nametable, &tree->nametable);
 
     return tree_derivative;
 }
