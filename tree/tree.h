@@ -17,7 +17,10 @@
 #define streq(s1, s2) (!strcmp((s1), (s2)))
 
 #define PRINTF_DEBUG(format, ...) \
-    PrintfDebug (__PRETTY_FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
+    PrintfDebug (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
+
+#define PRINTF_ERROR(format, ...) \
+    PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
 
 const int MAX_TREE = 5000;
 const int MAX_OP   = 10; // max len of operator or variable name // todo rename
@@ -119,6 +122,7 @@ int IsDouble (char * word); // ! WARNING cructh function
 
 int IsZero (double num);
 
-int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) );
+int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo
+int PrintfError (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo make single fucntion
 
 #endif // TREE_H

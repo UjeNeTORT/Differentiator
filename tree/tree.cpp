@@ -651,7 +651,26 @@ int PrintfDebug (const char * funcname, int line, const char * filename, const c
 {
     assert(format);
 
-    fprintf(stderr, BLACK_CLR "[DEBUG MESSAGE %s %d %s]\n<< ", funcname, line, filename);
+    fprintf(stderr, BLACK_CLR "[DEBUG | %s (%d) %s]\n<< ", funcname, line, filename);
+
+    va_list ptr;
+
+    va_start(ptr, format);
+
+    int res = vfprintf(stderr, format, ptr);
+
+    va_end(ptr);
+
+    fprintf(stdout, RST_CLR "\n" );
+
+    return res;
+}
+
+int PrintfError (const char * funcname, int line, const char * filename, const char * format, ...)
+{
+    assert(format);
+
+    fprintf(stderr, RED_CLR "[%s (%d) %s]\nERROR! ", funcname, line, filename);
 
     va_list ptr;
 
