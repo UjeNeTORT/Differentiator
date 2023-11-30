@@ -105,7 +105,7 @@ TexTreePrintRes TexTreePrint (const char * tex_fname, const Tree * tree)
     fprintf(tex_file, "$$   ");
 
     if (tree->root)
-        TexSubtreePrint (tex_file, tree->root, tree->root->right, tree->nametable);
+        TexSubtreePrint (tex_file, tree->root, tree->root->right, &tree->nametable);
     else
     {
         // it is not in the beginning because we may still need other info about the tree
@@ -186,13 +186,13 @@ int WriteHTML (const char * HTML_fname, int dump_id)
     return 0;
 }
 
-int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node, NameTable nametable)
+TexSubtreePrintRes TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node, const NameTable* nametable)
 {
     assert(stream);
 
     if (!node)
     {
-        return 0;
+        return TEX_SUBT_PRINT_SUCCESS;
     }
 
     const char * op_name = NULL;
@@ -203,16 +203,14 @@ int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node
     switch(node->data.type)
     {
         case ERR:
-            fprintf(stderr, "ERROR! Tex Dump Printer mustnt have entered ERR nodes!\n");
-            return 1;
-            break;
+            RET_ERROR(TEX_SUBT_PRINT_ERR, "Printer received error node");
 
         case NUM:
             fprintf(stream, " {%.3lf} ", node->data.val);
             break;
 
         case VAR:
-            fprintf(stream, " {%s} ", nametable.names[(int) node->data.val]);
+            fprintf(stream, " {%s} ", nametable->names[(int) node->data.val]);
             break;
 
         case UN_OP:
@@ -234,13 +232,13 @@ int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node
         case BI_OP:
             if ((opnum = FindOperation((int) node->data.val)) == ILL_OPNUM)
             {
-                fprintf(stderr, "TexSubtreePrint: no such operation (%d)\n", (int) node->data.val);
-                abort();
+                RET_ERROR(TEX_SUBT_PRINT_ERR, "No such operation (%d)\n", (int) node->data.val);
             }
 
-            if (FindOperation((int) prev->data.val) > FindOperation((int) node->data.val)) //! here we assume that prev is operation node
+            if (OPERATIONS[FindOperation((int) prev->data.val)].priority >
+                OPERATIONS[FindOperation((int) node->data.val)].priority) //! here we assume that prev is operation node
             {
-                print_parenthesis = 1;
+                    print_parenthesis = 1;
             }
 
             if (print_parenthesis)
@@ -266,11 +264,10 @@ int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node
             break;
 
         default:
-            PRINTF_DEBUG("default case");
-            break;
+            RET_ERROR(TEX_SUBT_PRINT_ERR, "Invalid node type \"%d\"\n", node->data.type);
     }
 
-    return 0;
+    return TEX_SUBT_PRINT_SUCCESS;
 }
 
 int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
@@ -291,6 +288,11 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 
     switch (node->data.type)
     {
+    case ERR:
+        color = GRAPH_ERRCLR;
+        sprintf(node_data, "ERR");
+        break;
+
     case NUM:
         color = GRAPH_NUMCLR;
         sprintf(node_data, "%.2lf", node->data.val);

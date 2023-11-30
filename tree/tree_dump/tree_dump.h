@@ -31,12 +31,19 @@ const char GRAPH_TEXTCLR[] = "#EDDDD4";
 const char GRAPH_NUMCLR[]  = "#197278";
 const char GRAPH_OPCLR[]   = "#C44536";
 const char GRAPH_VARCLR[]  = "#283D3B";
+const char GRAPH_ERRCLR[]  = "#000000";
 
 typedef enum
 {
     TEX_PRINT_SUCCESS = 0,
     TEX_PRINT_ERR     = 1,
 } TexTreePrintRes;
+
+typedef enum
+{
+    TEX_SUBT_PRINT_SUCCESS = 0,
+    TEX_SUBT_PRINT_ERR     = 1,
+} TexSubtreePrintRes;
 
 typedef enum
 {
@@ -52,7 +59,7 @@ DotTreePrintRes DotTreePrint    (const char * dot_fname, const Tree * tree);
 
 int WriteHTML       (const char * HTML_fname, int dump_id);
 
-int TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node, NameTable nametable);
+TexSubtreePrintRes TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node, const NameTable* nametable);
 int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable);
 
 int DotTreeDetailedPrint    (const char * dot_fname, const Tree * tree);
