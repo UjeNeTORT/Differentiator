@@ -26,7 +26,7 @@ Tree * derivative (const Tree * tree)
     return tree_derivative;
 }
 
-TreeNode * derivative (const TreeNode * node) // ? naming
+TreeNode * derivative (const TreeNode * node)
 {
     if (!node) return NULL;
 
@@ -53,8 +53,50 @@ TreeNode * derivative (const TreeNode * node) // ? naming
     case POW:
         return _MUL(_ADD(_MUL(dR, _LN(cL)), _DIV(_MUL(dL, cR), cL)), _POW(cL, cR));
 
+    case EXP:
+        return _MUL(dR, _EXP(cR));
+
+    case LN:
+        return _MUL(dR, _DIV(_NUM(1), cR));
+
+    case SIN:
+        return _MUL(dR, _COS(cR));
+
+    case COS:
+        return _MUL(dR, _SUB(_NUM(0), _SIN(cR)));
+
+    case TG:
+        return _MUL(dR, _DIV(_NUM(1), _POW(_COS(cR), _NUM(2))));
+
+    case CTG:
+        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SIN(cR), _NUM(2)))));
+
+    case ASIN:
+        return _MUL(dR, _DIV(_NUM(1), _POW(_SUB(_NUM(1), _POW(cR, _NUM(2))), _NUM(0.5))));
+
+    case ACOS:
+        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SUB(_NUM(1), _POW(cR, _NUM(2))), _NUM(0.5)))));
+
+    case ATG:
+        return _MUL(dR, _DIV(_NUM(1), _ADD(_NUM(1), _POW(cR, _NUM(2)))));
+
+    case ACTG:
+        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _ADD(_NUM(1), _POW(cR, _NUM(2))))));
+
+    case SH:
+        return _MUL(dR, _CH(cR));
+
+    case CH:
+        return _MUL(dR, _SH(cR));
+
+    case TH:
+        return _MUL(dR, _DIV(_NUM(1), _POW(_CH(cR), _NUM(2))));
+
+    case CTH:
+        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SH(cR), _NUM(2)))));
 
     default:
+        RET_ERROR(NULL, "Operation %d not found\n", (int) node->data.val);
         break;
     }
 

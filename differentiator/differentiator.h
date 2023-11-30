@@ -30,7 +30,12 @@
 #define _DIV(LEFT, RIGHT) TreeNodeCtor(DIV, BI_OP, LEFT, RIGHT)
 #define _POW(LEFT, RIGHT) TreeNodeCtor(POW, BI_OP, LEFT, RIGHT)
 
+#define _EXP(RIGHT)       TreeNodeCtor(EXP, UN_OP, NULL, RIGHT)
 #define _LN(RIGHT)        TreeNodeCtor(LN,  UN_OP, NULL, RIGHT)
+#define _SIN(RIGHT)       TreeNodeCtor(SIN, UN_OP, NULL, RIGHT)
+#define _COS(RIGHT)       TreeNodeCtor(COS, UN_OP, NULL, RIGHT)
+#define _SH(RIGHT)        TreeNodeCtor(SH,  UN_OP, NULL, RIGHT)
+#define _CH(RIGHT)        TreeNodeCtor(CH,  UN_OP, NULL, RIGHT)
 
 // ===============================================
 
