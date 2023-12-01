@@ -18,6 +18,8 @@
 #include "../colors.h"
 #include "tree.h"
 
+// ============================================================================================
+
 double Eval (const TreeNode * node, const NameTable * nametable)
 {
     assert(node);
@@ -104,8 +106,11 @@ double Eval (const TreeNode * node, const NameTable * nametable)
     return 0;
 }
 
+// ============================================================================================
+
 TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * right)
 {
+    // ======================   CODE BLOCK    ======================
     TreeNode * new_node = (TreeNode *) calloc(1, sizeof(TreeNode));
 
     new_node->data  = {type, val};
@@ -115,20 +120,21 @@ TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * r
     return new_node;
 }
 
+// ============================================================================================
+
 int TreeNodeDtor (TreeNode * node)
 {
-    if (!node)
-    {
-        return 0;
-    }
+    // ======================   CODE BLOCK    ======================
+    if (node) free(node);
 
-    free(node);
-
-    return 0;
+    return 0; // return value in most cases is ignored
 }
 
-Tree * TreeCtor (TreeNode * root)
+// ============================================================================================
+
+Tree * TreeCtor ()
 {
+    // ======================   CODE BLOCK    ======================
     Tree * tree = (Tree *) calloc(1, sizeof(Tree));
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
@@ -140,10 +146,16 @@ Tree * TreeCtor (TreeNode * root)
     return tree;
 }
 
-int TreeDtor (Tree * tree)
+// ============================================================================================
+
+TreeDtorRes TreeDtor (Tree * tree)
 {
+    // ====================== ASSERTION BLOCK ======================
     assert(tree);
 
+    if (!tree) RET_ERROR (TREE_DTOR_ERR_PARAMS, "Tree null pointer");
+
+    // ======================   CODE BLOCK    ======================
     // traverse the tree and free each node
     TraverseTree(tree, TreeNodeDtor, POSTORDER);
 
@@ -155,94 +167,34 @@ int TreeDtor (Tree * tree)
 
     free(tree);
 
-    return 0;
+    return TREE_DTOR_SUCCESS;
 }
 
-int TreeHangNode (Tree * tree, TreeNode * node, TreeNode * new_node, NodeLocation new_node_location, NodeLocation subtree_location)
-{
-    assert(tree);
-
-    int ret_val = 0;
-
-    if (!node && !tree->root)
-    {
-        if (tree->size == 0) // new node is tree root then
-        {
-            tree->root = new_node;
-
-            tree->size++;
-
-            return ret_val;
-        }
-        else
-        {
-            ret_val = -1; // error code
-
-            return ret_val;
-        }
-    }
-
-    TreeNode * subtree_ptr = NULL;
-
-    if (new_node_location == LEFT)
-    {
-        subtree_ptr = node->left;
-        node->left  = new_node;
-    }
-    else if (new_node_location == RIGHT)
-    {
-        subtree_ptr = node->right;
-        node->right = new_node;
-    }
-    else if (new_node_location == REPLACE)
-    {
-        subtree_ptr = node->left;
-        new_node->left = node->left;
-        new_node->right = node->right;
-
-        *node = *new_node;
-    }
-
-    if (new_node_location == REPLACE)
-    {
-        // do nothing
-    }
-    else if (subtree_location == LEFT)
-    {
-        new_node->left = subtree_ptr;
-    }
-    else if (subtree_location == RIGHT)
-    {
-        new_node->right = subtree_ptr;
-    }
-    else if (subtree_location == REPLACE) // we forbid such fucntionality
-    {
-        fprintf(stderr, "Forbidden to hang subtree onto intself. Choose LEFT or RIGHT\n");
-
-        ret_val = 1;
-    }
-
-    tree->size++;
-
-    return ret_val;
-}
+// ============================================================================================
 
 Tree* TreeCopy (const Tree * tree)
 {
-    assert(tree);
+    // ====================== ASSERTION BLOCK ======================
+    assert (tree);
 
-    Tree* copied = TreeCtor(NULL);
-    copied->root = SubtreeCopy(tree->root);
+    if (!tree) RET_ERROR (NULL, "Tree null pointer");
 
-    NameTableCopy(&copied->nametable, &tree->nametable);
+    // ======================   CODE BLOCK    ======================
+    Tree* copied = TreeCtor ();
+    copied->root = SubtreeCopy (tree->root);
+
+    NameTableCopy (&copied->nametable, &tree->nametable);
 
     copied->size = tree->size;
 
     return copied;
 }
 
+// ============================================================================================
+
 TreeNode * SubtreeCopy (TreeNode * node)
 {
+    // ======================   CODE BLOCK    ======================
     if (!node) return NULL;
 
     TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type,
@@ -251,11 +203,18 @@ TreeNode * SubtreeCopy (TreeNode * node)
     return copied;
 }
 
-int NameTableCopy (NameTable * dst, const NameTable * src)
+// ============================================================================================
+
+NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src)
 {
+    // ====================== ASSERTION BLOCK ======================
     assert(dst);
     assert(src);
 
+    if (!dst) RET_ERROR(NAMETABLE_COPY_ERR_PARAMS, "Destination nametable null pointer");
+    if (!dst) RET_ERROR(NAMETABLE_COPY_ERR_PARAMS, "Source nametable null pointer");
+
+    // ======================   CODE BLOCK    ======================
     for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
         dst->names[i] = strdup(src->names[i]);
@@ -263,54 +222,58 @@ int NameTableCopy (NameTable * dst, const NameTable * src)
     }
     dst->free = src->free;
 
-    return 0;
+    return NAMETABLE_COPY_SUCCESS;
 }
 
-int TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
+// ============================================================================================
+
+TraverseTreeRes TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
 {
+    // ====================== ASSERTION BLOCK ======================
     assert(tree);
+    if (!tree) RET_ERROR(TRVRS_TREE_ERR_PARAMS, "Tree null pointer");
 
-    if (!node)
-    {
-        return 0;
-    }
-
-    int ret_val = 0;
+    // ======================   CODE BLOCK    ======================
+    if (!node) return TRVRS_TREE_SUCCESS;
 
     if (traverse_order == PREORDER)
     {
-        ret_val = NodeAction(node);
+        NodeAction(node);
         TraverseTreeFrom(tree, node->left, NodeAction, traverse_order);
         TraverseTreeFrom(tree, node->right, NodeAction, traverse_order);
     }
     else if (traverse_order == INORDER)
     {
         TraverseTreeFrom(tree, node->left, NodeAction, traverse_order);
-        ret_val = NodeAction(node);
+        NodeAction(node);
         TraverseTreeFrom(tree, node->right, NodeAction, traverse_order);
     }
     else if (traverse_order == POSTORDER)
     {
         TraverseTreeFrom(tree, node->left, NodeAction, traverse_order);
         TraverseTreeFrom(tree, node->right, NodeAction, traverse_order);
-        ret_val = NodeAction(node);
+        NodeAction(node);
     }
     else
     {
         fprintf(stderr, "Wrong traversal order: %d\n", traverse_order);
 
-        return 1;
+        return TRVRS_TREE_ERR;
     }
 
-    return ret_val;
+    return TRVRS_TREE_SUCCESS;
 }
 
-int TraverseTree (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order)
+// ============================================================================================
+
+TraverseTreeRes TraverseTree (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order)
 {
     assert(tree);
 
     return TraverseTreeFrom(tree, tree->root, NodeAction, traverse_order);
 }
+
+// ============================================================================================
 
 TreeNode * SubtreeFind (TreeNode * node, double val, NodeType type)
 {
@@ -331,6 +294,8 @@ TreeNode * SubtreeFind (TreeNode * node, double val, NodeType type)
     return ((res = SubtreeFind(node->left, val, type)) == NULL) ? SubtreeFind(node->right, val, type) : res;
 }
 
+// ============================================================================================
+
 TreeNode * TreeFind (Tree * tree, double val, NodeType type)
 {
     assert(tree);
@@ -338,6 +303,8 @@ TreeNode * TreeFind (Tree * tree, double val, NodeType type)
 
     return SubtreeFind (tree->root, val, type);
 }
+
+// ============================================================================================
 
 TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * offset)
 {
@@ -380,18 +347,22 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
     return node;
 }
 
+// ============================================================================================
+
 Tree* ReadTree (const char * infix_tree)
 {
     assert(infix_tree);
 
     int offset = 0;
 
-    Tree* tree = TreeCtor(NULL);
+    Tree* tree = TreeCtor();
 
     tree->root = ReadSubtree(infix_tree, &tree->nametable, &offset);
 
     return tree;
 }
+
+// ============================================================================================
 
 Tree* ReadTree (FILE * stream)
 {
@@ -408,6 +379,8 @@ Tree* ReadTree (FILE * stream)
 
     return readen;
 }
+
+// ============================================================================================
 
 NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offset)
 {
@@ -447,6 +420,8 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
     return data; // error NodeType
 }
 
+// ============================================================================================
+
 int WriteSubtree(FILE * stream, const TreeNode * node, const NameTable * nametable)
 {
     assert(stream);
@@ -469,6 +444,8 @@ int WriteSubtree(FILE * stream, const TreeNode * node, const NameTable * nametab
     return ret_val;
 }
 
+// ============================================================================================
+
 int WriteTree(FILE * stream, const Tree * tree)
 {
     assert(stream);
@@ -480,6 +457,8 @@ int WriteTree(FILE * stream, const Tree * tree)
 
     return ret_val;
 }
+
+// ============================================================================================
 
 WriteNodeDataRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable)
 {
@@ -513,6 +492,8 @@ WriteNodeDataRes WriteNodeData (FILE * stream, NodeData data, const NameTable * 
 
     return WRT_NOD_DATA_SUCCESS;
 }
+
+// ============================================================================================
 
 int UpdNameTable(NameTable * nametable, char * word)
 {
@@ -549,6 +530,8 @@ int IncorrectVarName (const char * word)
     return 0;
 }
 
+// ============================================================================================
+
 ReadAssignVariableRes ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
 {
     assert(data);
@@ -575,14 +558,18 @@ ReadAssignVariableRes ReadAssignVariable (NodeData * data, char * word, NameTabl
     return READ_ASSIGN_VAR_SUCCESS;
 }
 
+// ============================================================================================
+
 ReadAssignOperatorRes ReadAssignOperator (NodeData * data, char * word)
 {
+    // ====================== ASSERTION BLOCK ======================
     assert(data);
     assert(word);
 
     if (!data) RET_ERROR(READ_ASSIGN_OP_ERR_PARAMS, "data null pointer");
     if (!word) RET_ERROR(READ_ASSIGN_OP_ERR_PARAMS, "word null pointer");
 
+    // ======================   CODE BLOCK    ======================
     for (size_t i = 0; i < OPERATIONS_NUM; i++)
     {
         if (streq(word, OPERATIONS[i].name))
@@ -597,15 +584,19 @@ ReadAssignOperatorRes ReadAssignOperator (NodeData * data, char * word)
     return READ_ASSIGN_OP_ERR_NOT_FOUND;
 }
 
+// ============================================================================================
+
 ReadAssignDoubleRes ReadAssignDouble (NodeData * data, char * word)
 {
+    // ====================== ASSERTION BLOCK ======================
     assert(data);
     assert(word);
 
     if (!data) RET_ERROR(READ_ASSIGN_DBL_ERR_PARAMS, "data null pointer");
     if (!word) RET_ERROR(READ_ASSIGN_DBL_ERR_PARAMS, "word null pointer");
 
-    if (IsDouble(word)) // ! WARNING CRUTCH ! check if word represents double
+    // ======================   CODE BLOCK    ======================
+    if (IsDouble(word)) // ! may be unsafe see function code
     {
         data->type = NUM;
         data->val = atof(word);
@@ -616,14 +607,22 @@ ReadAssignDoubleRes ReadAssignDouble (NodeData * data, char * word)
     return READ_ASSIGN_DBL_ERR; // didnt assign double to data
 }
 
+// ============================================================================================
+
 int ScanVariableVal (NameTable * nametable, int var_id)
 {
+    // ====================== ASSERTION BLOCK ======================
     assert(nametable);
 
+    if (!nametable) RET_ERROR(0, "Nametable null pointer");
+
+    // ======================   CODE BLOCK    ======================
     fprintf(stdout, "Please specify variable \"%s\"\n>> ", nametable->names[var_id]);
 
     return fscanf(stdin, "%lf", &nametable->vals[var_id]);
 }
+
+// ============================================================================================
 
 int FindOperation (int opcode)
 {
@@ -638,25 +637,39 @@ int FindOperation (int opcode)
     return ILL_OPNUM;
 }
 
-int FindNametableDups(NameTable * nametable, const char * word)
-{
-    assert(nametable);
-    assert(word);
+// ============================================================================================
 
+int FindNametableDups (NameTable * nametable, const char * word)
+{
+    // ====================== ASSERTION BLOCK ======================
+    assert (nametable);
+    assert (word);
+
+    if (!nametable) RET_ERROR (ILL_OPNUM, "Nametable null pointer");
+    if (!word)      RET_ERROR (ILL_OPNUM, "Word null pointer");
+
+    // ======================   CODE BLOCK    ======================
     for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        if (streq(nametable->names[i], word))
+        if (streq (nametable->names[i], word))
             return i; // duplicate id
     }
 
     return -1; // no duplicates
 }
 
-int IsDouble (char * word) // ! WARNING crutch function
+int IsDouble (char * word)
 {
-    assert(word);
+    // may be unsafe, not tested properly
+    // it handles most used cases
 
-    if (IsZero(atof(word)) && *word != '0' && *word != '.')
+    // ====================== ASSERTION BLOCK ======================
+    assert (word);
+
+    if (!word) RET_ERROR (0, "Word null pointer");
+
+    // ======================   CODE BLOCK    ======================
+    if (IsZero (atof (word)) && *word != '0' && *word != '.')
     {
         return 0;
     }
@@ -666,6 +679,6 @@ int IsDouble (char * word) // ! WARNING crutch function
 
 int IsZero (double num)
 {
-    return abs(num) < EPS ? 1 : 0;
+    return abs (num) < EPS ? 1 : 0;
 }
 

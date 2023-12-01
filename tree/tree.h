@@ -27,6 +27,30 @@ const double PI       = 3.141592654;
 
 typedef enum
 {
+    TREE_DTOR_SUCCESS    = 0,
+    TREE_DTOR_ERR_PARAMS = 1,
+} TreeDtorRes;
+
+typedef enum
+{
+    NAMETABLE_COPY_SUCCESS    = 0,
+    NAMETABLE_COPY_ERR_PARAMS = 1,
+} NameTableCopyRes;
+
+typedef enum
+{
+    TRVRS_TREE_SUCCESS    = 0,
+    TRVRS_TREE_ERR        = 1,
+    TRVRS_TREE_ERR_PARAMS = 2,
+} TraverseTreeRes;
+
+typedef enum
+{
+    TREE_NODE_DTOR_SUCCESS = 0,
+} TreeNodeDtorRes;
+
+typedef enum
+{
     PREORDER  = -1,
     INORDER   = 0,
     POSTORDER = 1,
@@ -102,17 +126,15 @@ double Eval (const TreeNode * node, const NameTable * nametable);
 TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * right);
 int       TreeNodeDtor (TreeNode * node);
 
-Tree*     TreeCtor     (TreeNode * root);
-int       TreeDtor     (Tree * tree);
+Tree*       TreeCtor   ();
+TreeDtorRes TreeDtor   (Tree * tree);
 
-int       TreeHangNode (Tree * tree, TreeNode * node, TreeNode * new_node, NodeLocation new_node_location, NodeLocation subtree_location);
+Tree*            TreeCopy      (const Tree * tree);
+TreeNode*        SubtreeCopy   (TreeNode * node);
+NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src);
 
-Tree*     TreeCopy      (const Tree * tree);
-TreeNode* SubtreeCopy   (TreeNode * node);
-int       NameTableCopy (NameTable * dst, const NameTable * src);
-
-int       TraverseTree     (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
-int       TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
+TraverseTreeRes  TraverseTree     (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
+TraverseTreeRes  TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
 
 TreeNode*  SubtreeFind (TreeNode * node, double val, NodeType type);
 TreeNode*  TreeFind    (Tree * tree, double val, NodeType type);
