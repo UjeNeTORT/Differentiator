@@ -358,7 +358,7 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
     {
         fprintf(stderr, "ReadSubTree: unknown action symbol %c (%d)\n", infix_tree[*offset], infix_tree[*offset]);
 
-        abort();
+        ABORT(); // !
     }
 
     TreeNode * node = TreeNodeCtor(0, NUM, NULL, NULL);
@@ -439,7 +439,7 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
         return data;
     }
 
-    if (ReadAssignVariable(&data, word, nametable))
+    if (ReadAssignVariable(&data, word, nametable) == READ_ASSIGN_VAR_SUCCESS)
     {
         return data;
     }
@@ -481,9 +481,13 @@ int WriteTree(FILE * stream, const Tree * tree)
     return ret_val;
 }
 
-int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
+WriteNodeDataRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable)
 {
     assert(stream);
+    assert(nametable);
+
+    if (!nametable) RET_ERROR(WRT_NOD_DATA_ERR, "Nametable null pointer");
+    if (!stream)    RET_ERROR(WRT_NOD_DATA_ERR, "Word null pointer");
 
     int opnum = -1;
 
@@ -491,9 +495,10 @@ int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
     {
         fprintf(stream, "%lf ", data.val);
 
-        return 0;
+        return WRT_NOD_DATA_SUCCESS;
     }
-    else if (data.type == VAR)
+
+    if (data.type == VAR)
     {
         fprintf(stream, "%s ", nametable->names[(int) data.val]);
     }
@@ -506,18 +511,23 @@ int WriteNodeData(FILE * stream, NodeData data, const NameTable * nametable)
             fprintf(stream, "UNKNOWN OPERATOR");
     }
 
-    return 0;
+    return WRT_NOD_DATA_SUCCESS;
 }
 
 int UpdNameTable(NameTable * nametable, char * word)
 {
+    assert(nametable);
     assert(word);
 
+    if (!nametable) RET_ERROR(-1, "Nametable null pointer");
+    if (!word)      RET_ERROR(-1, "Word null pointer");
+
     strcpy(nametable->names[nametable->free], word);
+
     return nametable->free++;
 }
 
-int IncorrectVarName(const char * word)
+int IncorrectVarName (const char * word)
 {
     assert(word);
 
@@ -539,17 +549,16 @@ int IncorrectVarName(const char * word)
     return 0;
 }
 
-int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
+ReadAssignVariableRes ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
 {
     assert(data);
     assert(word);
 
-    if (IncorrectVarName((const char *) word))
-    {
-        fprintf(stderr, "ReadNodeData: incorrect variable name \"%s\"\n", word);
+    if (!data) RET_ERROR(READ_ASSIGN_VAR_ERR_PARAMS, "data null pointer");
+    if (!word) RET_ERROR(READ_ASSIGN_VAR_ERR_PARAMS, "word null pointer");
 
-        return 0;
-    }
+    if (IncorrectVarName((const char *) word))
+        RET_ERROR(READ_ASSIGN_VAR_ERR, "Incorrect variable name \"%s\"\n", word);
 
     int var_id = -1;
 
@@ -557,22 +566,22 @@ int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
     {
         var_id = UpdNameTable(nametable, word);
 
-        if (!ScanVariableVal(nametable, var_id))
-        {
-            return 0; // error code not documented
-        }
+        if (!ScanVariableVal(nametable, var_id)) return READ_ASSIGN_VAR_ERR;
     }
 
     data->type = VAR;
     data->val  = var_id;
 
-    return 1;
+    return READ_ASSIGN_VAR_SUCCESS;
 }
 
-int ReadAssignOperator (NodeData * data, char * word)
+ReadAssignOperatorRes ReadAssignOperator (NodeData * data, char * word)
 {
     assert(data);
     assert(word);
+
+    if (!data) RET_ERROR(READ_ASSIGN_OP_ERR_PARAMS, "data null pointer");
+    if (!word) RET_ERROR(READ_ASSIGN_OP_ERR_PARAMS, "word null pointer");
 
     for (size_t i = 0; i < OPERATIONS_NUM; i++)
     {
@@ -581,27 +590,30 @@ int ReadAssignOperator (NodeData * data, char * word)
             data->type = OPERATIONS[i].type;
             data->val  = OPERATIONS[i].opcode;
 
-            return 1;
+            return READ_ASSIGN_OP_SUCCESS;
         }
     }
 
-    return 0;
+    return READ_ASSIGN_OP_ERR_NOT_FOUND;
 }
 
-int ReadAssignDouble (NodeData * data, char * word)
+ReadAssignDoubleRes ReadAssignDouble (NodeData * data, char * word)
 {
     assert(data);
     assert(word);
+
+    if (!data) RET_ERROR(READ_ASSIGN_DBL_ERR_PARAMS, "data null pointer");
+    if (!word) RET_ERROR(READ_ASSIGN_DBL_ERR_PARAMS, "word null pointer");
 
     if (IsDouble(word)) // ! WARNING CRUTCH ! check if word represents double
     {
         data->type = NUM;
         data->val = atof(word);
 
-        return 1; // assigned double to data
+        return READ_ASSIGN_DBL_SUCCESS; // assigned double to data
     }
 
-    return 0; // didnt assign double to data
+    return READ_ASSIGN_DBL_ERR; // didnt assign double to data
 }
 
 int ScanVariableVal (NameTable * nametable, int var_id)
@@ -657,40 +669,3 @@ int IsZero (double num)
     return abs(num) < EPS ? 1 : 0;
 }
 
-int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...)
-{
-    assert(format);
-
-    fprintf(stderr, BLACK_CLR "[DEBUG | %s (%d) %s]\n<< ", funcname, line, filename);
-
-    va_list ptr;
-
-    va_start(ptr, format);
-
-    int res = vfprintf(stderr, format, ptr);
-
-    va_end(ptr);
-
-    fprintf(stdout, RST_CLR "\n" );
-
-    return res;
-}
-
-int PrintfError (const char * funcname, int line, const char * filename, const char * format, ...)
-{
-    assert(format);
-
-    fprintf(stderr, RED_CLR "[%s (%d) %s]\nERROR! ", funcname, line, filename);
-
-    va_list ptr;
-
-    va_start(ptr, format);
-
-    int res = vfprintf(stderr, format, ptr);
-
-    va_end(ptr);
-
-    fprintf(stdout, RST_CLR "\n" );
-
-    return res;
-}

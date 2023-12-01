@@ -13,18 +13,7 @@
 #include <stdio.h>
 
 #include "operations.h"
-
-#define streq(s1, s2) (!strcmp((s1), (s2)))
-
-#define PRINTF_DEBUG(format, ...) \
-    PrintfDebug (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
-
-#define ERROR(format, ...) \
-    PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__) \
-
-#define RET_ERROR(err_code, format, ...) \
-    { PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__); \
-      return err_code;}
+#include "../mylib/mylib.h"
 
 const int MAX_TREE = 5000;
 const int MAX_OP   = 10; // max len of operator or variable name // todo rename
@@ -49,6 +38,33 @@ typedef enum
     REPLACE = 0,
     RIGHT   = 1,
 } NodeLocation;
+
+typedef enum
+{
+    WRT_NOD_DATA_SUCCESS = 0,
+    WRT_NOD_DATA_ERR     = 1,
+} WriteNodeDataRes;
+
+typedef enum
+{
+    READ_ASSIGN_VAR_SUCCESS    = 0,
+    READ_ASSIGN_VAR_ERR        = 1,
+    READ_ASSIGN_VAR_ERR_PARAMS = 2,
+} ReadAssignVariableRes;
+
+typedef enum
+{
+    READ_ASSIGN_OP_SUCCESS       = 0,
+    READ_ASSIGN_OP_ERR_NOT_FOUND = 1,
+    READ_ASSIGN_OP_ERR_PARAMS    = 2,
+} ReadAssignOperatorRes;
+
+typedef enum
+{
+    READ_ASSIGN_DBL_SUCCESS     = 0,
+    READ_ASSIGN_DBL_ERR         = 1,
+    READ_ASSIGN_DBL_ERR_PARAMS  = 2,
+} ReadAssignDoubleRes;
 
 struct NameTable
 {
@@ -108,14 +124,14 @@ NodeData   ReadNodeData (const char * infix_tree, NameTable * nametable, int * o
 
 int WriteSubtree  (FILE * stream, const TreeNode * node, const NameTable * nametable);
 int WriteTree     (FILE * stream, const Tree * tree);
-int WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
+WriteNodeDataRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
 int UpdNameTable     (NameTable * nametable, char * word);
 int IncorrectVarName (const char * word);
 
-int ReadAssignVariable (NodeData * data, char * word, NameTable * nametable);
-int ReadAssignOperator (NodeData * data, char * word);
-int ReadAssignDouble   (NodeData * data, char * word);
+ReadAssignVariableRes ReadAssignVariable (NodeData * data, char * word, NameTable * nametable);
+ReadAssignOperatorRes ReadAssignOperator (NodeData * data, char * word);
+ReadAssignDoubleRes   ReadAssignDouble   (NodeData * data, char * word);
 
 int ScanVariableVal (NameTable * nametable, int var_id);
 
@@ -127,7 +143,8 @@ int IsDouble (char * word); // ! WARNING cructh function
 
 int IsZero (double num);
 
-int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo
-int PrintfError (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo make single fucntion
+int PrintfDebug   (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo
+int PrintfError   (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo make single fucntion
+int PrintfWarning (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo make single fucntion
 
 #endif // TREE_H
