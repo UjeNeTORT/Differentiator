@@ -12,8 +12,9 @@
 
 #include <stdio.h>
 
+#include "../tools/tools.h"
 #include "operations.h"
-#include "../mylib/mylib.h"
+#include "../colors.h"
 
 const int MAX_TREE = 5000;
 const int MAX_OP   = 10; // max len of operator or variable name // todo rename
@@ -65,9 +66,10 @@ typedef enum
 
 typedef enum
 {
-    WRT_NOD_DATA_SUCCESS = 0,
-    WRT_NOD_DATA_ERR     = 1,
-} WriteNodeDataRes;
+    WRT_TREE_SUCCESS    = 0,
+    WRT_TREE_ERR        = 1,
+    WRT_TREE_ERR_PARAMS = 2,
+} WriteTreeRes;
 
 typedef enum
 {
@@ -89,6 +91,13 @@ typedef enum
     READ_ASSIGN_DBL_ERR         = 1,
     READ_ASSIGN_DBL_ERR_PARAMS  = 2,
 } ReadAssignDoubleRes;
+
+typedef enum
+{
+    SKIP_SPACES_SUCCESS    = 0,
+    SKIP_SPACES_ERR        = 1,
+    SKIP_SPACES_ERR_PARAMS = 2,
+} SkipSpacesRes;
 
 struct NameTable
 {
@@ -144,9 +153,9 @@ Tree*      ReadTree     (const char * infix_tree);
 TreeNode*  ReadSubtree  (const char * infix_tree, NameTable * nametable, int * offset);
 NodeData   ReadNodeData (const char * infix_tree, NameTable * nametable, int * offset);
 
-int WriteSubtree  (FILE * stream, const TreeNode * node, const NameTable * nametable);
-int WriteTree     (FILE * stream, const Tree * tree);
-WriteNodeDataRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
+WriteTreeRes WriteSubtree  (FILE * stream, const TreeNode * node, const NameTable * nametable);
+WriteTreeRes WriteTree     (FILE * stream, const Tree * tree);
+WriteTreeRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
 int UpdNameTable     (NameTable * nametable, char * word);
 int IncorrectVarName (const char * word);
@@ -165,8 +174,6 @@ int IsDouble (char * word); // ! WARNING cructh function
 
 int IsZero (double num);
 
-int PrintfDebug   (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo
-int PrintfError   (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo make single fucntion
-int PrintfWarning (const char * funcname, int line, const char * filename, const char * format, ...) __attribute__( (format(printf, 4, 5)) ); // todo make single fucntion
+SkipSpacesRes SkipSpaces (const char * string, int* offset);
 
 #endif // TREE_H
