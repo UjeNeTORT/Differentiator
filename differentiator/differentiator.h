@@ -12,11 +12,12 @@
 
 #include "../tree/tree.h"
 #include "../tree/tree_dump/tree_dump.h"
+#include "rofls.h"
 #include "../tools/tools.h"
 
 // ===================== DSL =====================
 
-#define d(node)  Derivative(tex_file, node, nametable)
+#define d(node) Derivative(tex_file, node, nametable)
 #define c(node) SubtreeCopy(node)
 
 #define dL d(node->left)

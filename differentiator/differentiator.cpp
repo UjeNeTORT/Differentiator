@@ -135,12 +135,11 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nam
 
     if (tex_file && (int) node->data.val != EQUAL)
     {
-        fprintf(tex_file, "Derivative of \n");
+        fprintf(tex_file, "%s\n", MATAN_PHRASES[rand() % MATAN_PHRASES_N]);
         fprintf(tex_file, "$$  (");
         TexSubtreePrint(tex_file, NULL, node, nametable);
-        fprintf(tex_file, ")'  $$\n");
+        fprintf(tex_file, ")\' = $$\n");
 
-        fprintf(tex_file, "is equal\n");
         fprintf(tex_file, "$$  ");
         TexSubtreePrint(tex_file, node, d_node, nametable);
         fprintf(tex_file, "  $$\n");
