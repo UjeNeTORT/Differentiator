@@ -16,38 +16,6 @@
 
 #include "tree_dump.h"
 
-FILE* InitTexDump (const Tree* tree, char * tex_path)
-{
-    assert (tree);
-    assert (tex_path);
-
-    srand(time(0));
-    int dump_id = (int) time(NULL);
-
-    sprintf(tex_path, "expr_%d.tex", dump_id); // stores filename
-    char* temp_tex_path = GetFilePath (TEX_FILE_PATH, tex_path);
-    strcpy(tex_path, temp_tex_path);
-    free(temp_tex_path);
-
-    FILE * tex_file = fopen (tex_path, "wb");
-
-    time_t t = time (NULL);
-    tm * loc_time = localtime (&t);
-
-    fprintf (tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
-                        "\\usepackage{amsmath}\n"
-                        "\\DeclareMathOperator\\arcctan{arcctan}\n"
-                        "\\title{EXPRESSION DUMP}\n"
-                        "\\author{Tikhonov Yaroslav (aka UjeNeTORT)}\n"
-                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
-                        "\\begin{document}\n"
-                        "\\maketitle\n",
-                        loc_time->tm_mday, loc_time->tm_mon + 1, loc_time->tm_year + 1900,
-                        loc_time->tm_hour, loc_time->tm_min, loc_time->tm_sec);
-
-    return tex_file;
-}
-
 int TreeTexDump (const Tree * tree)
 {
     assert(tree);
@@ -68,16 +36,66 @@ int TreeTexDump (const Tree * tree)
     return 0;
 }
 
-int CompileLatex (char * tex_path)
+FILE* InitTexDump (const Tree* tree, char * tex_path)
 {
-    assert(tex_path);
+    assert (tree);
+    assert (tex_path);
 
-    CompileTex(tex_path);
+    srand(time(0));
+    int dump_id = (int) time(NULL);
 
-    return 0;
+    sprintf(tex_path, "expr_%d.tex", dump_id); // stores filename
+    char* temp_tex_path = GetFilePath (TEX_FILE_PATH, tex_path);
+    strcpy(tex_path, temp_tex_path);
+    free(temp_tex_path);
+
+    time_t t = time (NULL);
+    tm * loc_time = localtime (&t);
+
+    FILE * tex_file = fopen (tex_path, "wb");
+
+    fprintf (tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
+                        "\\usepackage[T2A]{fontenc}"
+                        "\\usepackage[russian]{babel}"
+                        "\\usepackage{amsmath}\n"
+                        "\\DeclareMathOperator\\arcctan{arcctan}\n"
+                        "\\title{EXPRESSION DUMP}\n"
+                        "\\author{Tikhonov Yaroslav (aka UjeNeTORT)}\n"
+                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
+                        "\\begin{document}\n"
+                        "\\maketitle\n",
+                        loc_time->tm_mday, loc_time->tm_mon + 1, loc_time->tm_year + 1900,
+                        loc_time->tm_hour, loc_time->tm_min, loc_time->tm_sec);
+
+    return tex_file;
 }
 
-int CompileTex(const char* tex_path)
+TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree * tree)
+{
+    assert (tex_file);
+    assert (tree);
+
+    if (!tex_file) RET_ERROR(TEX_PRINT_ERR, "Tex file null pointer");
+    if (!tree)     RET_ERROR(TEX_PRINT_ERR, "Tree null pointer");
+
+    fprintf(tex_file, "$$  ");
+
+    if (tree->root)
+        TexSubtreePrint (tex_file, tree->root, tree->root->right, &tree->nametable);
+    else
+    {
+        // it is not in the beginning because we may still need other info about the tree
+        // apart from tree being shown itself
+
+        RET_ERROR (TEX_PRINT_ERR, "Tree root null pointer");
+    }
+
+    fprintf(tex_file, "  $$\n\n");
+
+    return TEX_PRINT_SUCCESS;
+}
+
+int CompileLatex(const char* tex_path)
 {
     assert(tex_path);
 
@@ -180,31 +198,6 @@ int WriteHTML (const char * HTML_fname, int dump_id)
     return 0;
 }
 
-TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree * tree)
-{
-    assert (tex_file);
-    assert (tree);
-
-    if (!tex_file) RET_ERROR(TEX_PRINT_ERR, "Tex file null pointer");
-    if (!tree)     RET_ERROR(TEX_PRINT_ERR, "Tree null pointer");
-
-    fprintf(tex_file, "$$  ");
-
-    if (tree->root)
-        TexSubtreePrint (tex_file, tree->root, tree->root->right, &tree->nametable);
-    else
-    {
-        // it is not in the beginning because we may still need other info about the tree
-        // apart from tree being shown itself
-
-        RET_ERROR (TEX_PRINT_ERR, "Tree root null pointer");
-    }
-
-    fprintf(tex_file, "  $$\n");
-
-    return TEX_PRINT_SUCCESS;
-}
-
 DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
 {
     assert(dot_fname);
@@ -284,7 +277,7 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
             if (prev && OPERATIONS[FindOperation((int) prev->data.val)].priority >
                         OPERATIONS[FindOperation((int) node->data.val)].priority) //! here we assume that prev is operation node
             {
-                    print_parenthesis = 1;
+                print_parenthesis = 1;
             }
 
             if (print_parenthesis)
