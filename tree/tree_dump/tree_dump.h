@@ -51,25 +51,18 @@ typedef enum
     DOT_PRINT_ERR     = 1,
 } DotTreePrintRes;
 
-FILE* InitTexDump (const Tree* tree, char * tex_fname);
-int TreeTexDump  (const Tree* tree);
-int CompileLatex (char* tex_fname);
-int CompileTex   (const char* tex_path);
-int ConcludeTexDump (FILE* tex_file);
-
+FILE* InitTexDump     (const Tree* tree, char * tex_fname);
+int   TreeTexDump     (const Tree* tree);
+int   CompileLatex    (char* tex_fname);
+int   CompileTex      (const char* tex_path);
+int   ConcludeTexDump (FILE* tex_file, char * tex_path);
 
 int TreeDotDump (const char * fname, const Tree * tree);
 int CompileDot  (char* dot_fname, char* detailed_dot_fname, int dump_id);
 int WriteHTML   (const char * HTML_fname, int dump_id);
 
-
-/// @brief print tex code of tree to tex_fname file
-/// @param [tex_fname] tex file name
-/// @param [tree]      tree pointer
-/// @return
 TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree * tree);
 DotTreePrintRes DotTreePrint (const char* dot_fname, const Tree* tree);
-
 
 TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const NameTable* nametable);
 int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable);
