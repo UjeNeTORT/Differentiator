@@ -12,11 +12,12 @@
 
 #include "../tree/tree.h"
 #include "../tree/tree_dump/tree_dump.h"
+#include "../tools/tools.h"
 
 // ===================== DSL =====================
 
-#define d(node_or_tree) derivative(node_or_tree)
-#define c(node)         SubtreeCopy(node)
+#define d(...)  Derivative(__VA_ARGS__)
+#define c(node) SubtreeCopy(node)
 
 #define dL d(node->left)
 #define dR d(node->right)
@@ -39,7 +40,15 @@
 
 // ===============================================
 
-Tree     * derivative (const Tree * tree);
-TreeNode * derivative (const TreeNode * node);
+Tree*     Derivative (const Tree * tree);
+TreeNode* Derivative (const TreeNode* node);
+
+Tree*     DerivativeReport (FILE* tex_stream, const Tree * tree);
+TreeNode* DerivativeReport (FILE* tex_stream, const TreeNode* node, NameTable* nametable);
+
+
+TreeNode* Derivative (const TreeNode* node);
+
+int DerivativeTexReport (FILE* tex_stream, const TreeNode* d_node, const TreeNode* node, const NameTable* nametable);
 
 #endif // DIFFERENTIATOR_H

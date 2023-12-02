@@ -10,25 +10,48 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "differentiator.h"
 
-Tree * derivative (const Tree * tree)
+Tree* Derivative (const Tree * tree)
 {
-    assert(tree);
-    if (!tree) RET_ERROR(NULL, "Tree null pointer");
+    assert (tree);
+    if (!tree) RET_ERROR (NULL, "Tree null pointer");
 
-    Tree * tree_derivative = (Tree *) calloc(1, sizeof(Tree));
+    Tree* tree_derivative = (Tree*) calloc(1, sizeof(Tree));
 
-    tree_derivative->root = TreeNodeCtor(EQUAL, UN_OP, NULL, d(tree->root));
     NameTableCopy (&tree_derivative->nametable, &tree->nametable);
+
+    tree_derivative->root = TreeNodeCtor (EQUAL, UN_OP, NULL, Derivative (tree->root));
 
     return tree_derivative;
 }
 
-TreeNode * derivative (const TreeNode * node)
+Tree* DerivativeReport (FILE* tex_stream, const Tree * tree)
+{
+    assert(tree);
+    if (!tree) RET_ERROR (NULL, "Tree null pointer");
+
+    char tex_fname[MAX_TREE_FNAME] = "";
+
+    FILE* tree_file = InitTexDump(tree, tex_fname);
+
+    Tree* tree_derivative = (Tree*) calloc(1, sizeof(Tree));
+
+    NameTableCopy (&tree_derivative->nametable, &tree->nametable);
+
+    // tree_derivative->root = TreeNodeCtor (EQUAL, UN_OP, NULL,
+                                    // DerivativeReport (tex_stream, tree->root, &tree_derivative->nametable));
+
+    return tree_derivative;
+}
+
+TreeNode* Derivative (const TreeNode* node)
 {
     if (!node) return NULL;
+
+    if (node->data.type == ERR) RET_ERROR (NULL, "Error node passed to differentiation function\n");
 
     if (node->data.type == NUM) return _NUM(0);
     if (node->data.type == VAR) return _NUM(1);
@@ -123,4 +146,17 @@ TreeNode * derivative (const TreeNode * node)
     }
 
     return d_node;
+}
+
+int DerivativeTexReport (FILE* tex_stream, const TreeNode* d_node, const TreeNode* node, const NameTable* nametable)
+{
+    if (!tex_stream) RET_ERROR(1, "Tex stream null pointer");
+    if (!nametable)  RET_ERROR(1, "Nametable null pointer");
+
+    // derivative of
+    TexSubtreePrint(tex_stream, NULL, node, nametable);
+    // is equal
+    TexSubtreePrint(tex_stream, NULL, d_node, nametable);
+
+    return 0;
 }
