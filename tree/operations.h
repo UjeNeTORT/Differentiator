@@ -1,7 +1,7 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
 
-const int ILL_OPNUM = 1000;
+const int ILL_OPNUM = __INT_MAX__;
 
 typedef enum
 {
@@ -67,7 +67,7 @@ const Operation OPERATIONS[] = // codestyle?
     {CH,    "ch",     UN_OP, 4},
     {TH,    "th",     UN_OP, 4},
     {CTH,   "cth",    UN_OP, 4},
-    {LOG,   "log",    BI_OP, 4},
+    // {LOG,   "log",    BI_OP, 4},
 };
 
 const int OPERATIONS_NUM = sizeof(OPERATIONS) / sizeof(Operation);

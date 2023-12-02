@@ -398,12 +398,12 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
 
     *offset += addition;
 
-    if (ReadAssignDouble(&data, word))
+    if (ReadAssignDouble(&data, word) == READ_ASSIGN_DBL_SUCCESS)
     {
         return data;
     }
 
-    if (ReadAssignOperator(&data, word))
+    if (ReadAssignOperator(&data, word) == READ_ASSIGN_OP_SUCCESS)
     {
         return data;
     }
