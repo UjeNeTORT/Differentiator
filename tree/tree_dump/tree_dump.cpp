@@ -16,21 +16,63 @@
 
 #include "tree_dump.h"
 
-int TreeTexDump (const Tree * tree)
+FILE* InitTexDump (const Tree* tree, char * tex_fname)
 {
-    assert(tree);
+    assert (tree);
+    assert (tex_fname);
 
     srand(time(0));
 
     int dump_id = (int) time(NULL);
 
-    char tex_fname[MAX_TREE_FNAME] = "";
     sprintf(tex_fname, "expr_%d.tex", dump_id);
 
-    if (TexTreePrint(tex_fname, tree) != TEX_PRINT_SUCCESS)
+    char * tex_path = GetFilePath (TEX_FILE_PATH, tex_fname);
+
+    FILE * tex_file = fopen (tex_path, "wb");
+
+    time_t t = time (NULL);
+    tm * loc_time = localtime (&t);
+
+    fprintf (tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
+                        "\\usepackage{amsmath}\n"
+                        "\\DeclareMathOperator\\arcctan{arcctan}\n"
+                        "\\title{EXPRESSION DUMP}\n"
+                        "\\author{Tikhonov Yaroslav (aka UjeNeTORT)}\n"
+                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
+                        "\\begin{document}\n"
+                        "\\maketitle\n",
+                        loc_time->tm_mday, loc_time->tm_mon + 1, loc_time->tm_year + 1900,
+                        loc_time->tm_hour, loc_time->tm_min, loc_time->tm_sec);
+
+    free(tex_path);
+
+    return tex_file;
+}
+
+int TreeTexDump (const Tree * tree)
+{
+    assert(tree);
+
+    char tex_fname[MAX_TREE_FNAME] = "";
+
+    FILE* tex_file = InitTexDump(tree, tex_fname);
+
+    if (TexTreePrint(tex_file, tree) != TEX_PRINT_SUCCESS)
     {
         RET_ERROR(-1, "Tree wasnt printed");
     }
+
+    CompileLatex(tex_fname);
+
+    ConcludeTexDump(tex_file);
+
+    return 0;
+}
+
+int CompileLatex (char * tex_fname)
+{
+    assert(tex_fname);
 
     char * tex_path = GetFilePath(TEX_FILE_PATH, tex_fname);
 
@@ -38,18 +80,28 @@ int TreeTexDump (const Tree * tree)
 
     free(tex_path);
 
-    return dump_id;
+    return 0;
 }
 
 int CompileTex(const char* tex_path)
 {
     char command[COMMAND_BUF_SIZE] = "";
-    sprintf(command, "pdflatex -output-directory=%s %s ", PDF_DUMPS_PATH, tex_path);
+    sprintf(command, "pdflatex -output-directory=%s %s", PDF_DUMPS_PATH, tex_path);
     system(command);
 
     sprintf(command, "	rm -f %s/*.aux"
 	                 "  rm -f %s/*.log", PDF_DUMPS_PATH, PDF_DUMPS_PATH);
     system(command);
+
+    return 0;
+}
+
+int ConcludeTexDump (FILE* tex_file)
+{
+    assert(tex_file);
+
+    fprintf (tex_file, "\\end{document}\n");
+    fclose (tex_file);
 
     return 0;
 }
@@ -71,6 +123,18 @@ int TreeDotDump (const char * HTML_fname, const Tree * tree)
     sprintf(detailed_dot_fname, "detailed_graph_%d.dot", dump_id);
     DotTreeDetailedPrint (detailed_dot_fname, tree);
 
+    CompileDot(dot_fname, detailed_dot_fname, dump_id);
+
+    WriteHTML(HTML_fname, dump_id);
+
+    return dump_id;
+}
+
+int CompileDot (char* dot_fname, char* detailed_dot_fname, int dump_id)
+{
+    assert(dot_fname);
+    assert(detailed_dot_fname);
+
     char command[COMMAND_BUF_SIZE] = "";
     sprintf (command, "dot -Tsvg %s%s -o %sgraph_dump_%d.svg", DOT_FILE_PATH, dot_fname, GRAPH_SVGS_PATH, dump_id);
     system (command);
@@ -78,82 +142,7 @@ int TreeDotDump (const char * HTML_fname, const Tree * tree)
     sprintf (command, "dot -Tsvg %s%s -o %sdetailed_graph_dump_%d.svg", DOT_FILE_PATH, detailed_dot_fname, GRAPH_SVGS_PATH, dump_id);
     system (command);
 
-    WriteHTML(HTML_fname, dump_id);
-
-    return dump_id;
-}
-
-TexTreePrintRes TexTreePrint (const char * tex_fname, const Tree * tree)
-{
-    assert (tex_fname);
-    assert (tree);
-
-    if (!tex_fname) RET_ERROR(TEX_PRINT_ERR, "Tex filename null pointer");
-    if (!tree)      RET_ERROR(TEX_PRINT_ERR, "Tree null pointer");
-
-    char * tex_path = GetFilePath (TEX_FILE_PATH, tex_fname);
-
-    FILE * tex_file = fopen (tex_path, "wb");
-
-    time_t t = time (NULL);
-    tm * loc_time = localtime (&t);
-
-    fprintf (tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
-                        "\\usepackage{amsmath}\n"
-                        "\\DeclareMathOperator\\arcctan{arcctan}\n"
-                        "\\title{EXPRESSION DUMP}\n"
-                        "\\author{Tikhonov Yaroslav (aka UjeNeTORT)}\n"
-                        "\\date{Date: %d.%d.%d, Time %d:%d:%d}\n"
-                        "\\begin{document}\n"
-                        "\\maketitle\n",
-                        loc_time->tm_mday, loc_time->tm_mon + 1, loc_time->tm_year + 1900,
-                        loc_time->tm_hour, loc_time->tm_min, loc_time->tm_sec);
-
-    fprintf(tex_file, "$$   ");
-
-    if (tree->root)
-        TexSubtreePrint (tex_file, tree->root, tree->root->right, &tree->nametable);
-    else
-    {
-        // it is not in the beginning because we may still need other info about the tree
-        // apart from tree being shown itself
-        free (tex_path);
-        RET_ERROR (TEX_PRINT_ERR, "Tree root null pointer");
-    }
-
-    fprintf (tex_file, "   $$\n");
-
-    fprintf (tex_file, "\\end{document}\n");
-    fclose (tex_file);
-
-    free (tex_path);
-
-    return TEX_PRINT_SUCCESS;
-}
-
-DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
-{
-    assert(dot_fname);
-    assert(tree);
-    if (!dot_fname) RET_ERROR(DOT_PRINT_ERR, "Tex filename null pointer\n");
-    if (!tree)      RET_ERROR(DOT_PRINT_ERR, "Tree null pointer\n");
-
-    char * dot_path = GetFilePath(DOT_FILE_PATH, dot_fname);
-
-    FILE * dot_file = fopen (dot_path, "wb");
-
-    fprintf (dot_file, "digraph TREE {\n"
-                        "bgcolor =\"%s\"", GRAPH_BGCLR);
-
-    DotSubtreePrint (dot_file, tree->root, tree->nametable);
-
-    fprintf (dot_file, "}\n");
-
-    fclose (dot_file);
-
-    free(dot_path);
-
-    return DOT_PRINT_SUCCESS;
+    return 0;
 }
 
 int WriteHTML (const char * HTML_fname, int dump_id)
@@ -193,9 +182,61 @@ int WriteHTML (const char * HTML_fname, int dump_id)
     return 0;
 }
 
-TexSubtreePrintRes TexSubtreePrint (FILE * stream, const TreeNode * prev, const TreeNode * node, const NameTable* nametable)
+TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree * tree)
 {
-    assert(stream);
+    assert (tex_file);
+    assert (tree);
+
+    if (!tex_file) RET_ERROR(TEX_PRINT_ERR, "Tex file null pointer");
+    if (!tree)     RET_ERROR(TEX_PRINT_ERR, "Tree null pointer");
+
+    fprintf(tex_file, "$$  ");
+
+    if (tree->root)
+        TexSubtreePrint (tex_file, tree->root, tree->root->right, &tree->nametable);
+    else
+    {
+        // it is not in the beginning because we may still need other info about the tree
+        // apart from tree being shown itself
+
+        RET_ERROR (TEX_PRINT_ERR, "Tree root null pointer");
+    }
+
+    fprintf(tex_file, "  $$\n");
+
+    return TEX_PRINT_SUCCESS;
+}
+
+DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
+{
+    assert(dot_fname);
+    assert(tree);
+    if (!dot_fname) RET_ERROR(DOT_PRINT_ERR, "Tex filename null pointer\n");
+    if (!tree)      RET_ERROR(DOT_PRINT_ERR, "Tree null pointer\n");
+
+    char * dot_path = GetFilePath(DOT_FILE_PATH, dot_fname);
+
+    FILE * dot_file = fopen (dot_path, "wb");
+
+    fprintf (dot_file, "digraph TREE {\n"
+                        "bgcolor =\"%s\"", GRAPH_BGCLR);
+
+    DotSubtreePrint (dot_file, tree->root, tree->nametable);
+
+    fprintf (dot_file, "}\n");
+
+    fclose (dot_file);
+
+    free(dot_path);
+
+    return DOT_PRINT_SUCCESS;
+}
+
+TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const NameTable* nametable)
+{
+    assert(tex_file);
+
+    if (!prev) WARN("Prev null pointer (braces wont be printed)\n");
 
     if (!node)
     {
@@ -213,11 +254,11 @@ TexSubtreePrintRes TexSubtreePrint (FILE * stream, const TreeNode * prev, const 
             RET_ERROR(TEX_SUBT_PRINT_ERR, "Printer received error node");
 
         case NUM:
-            fprintf(stream, " {%.3lf} ", node->data.val);
+            fprintf(tex_file, " {%.3lf} ", node->data.val);
             break;
 
         case VAR:
-            fprintf(stream, " {%s} ", nametable->names[(int) node->data.val]);
+            fprintf(tex_file, " {%s} ", nametable->names[(int) node->data.val]);
             break;
 
         case UN_OP:
@@ -226,12 +267,12 @@ TexSubtreePrintRes TexSubtreePrint (FILE * stream, const TreeNode * prev, const 
 
             if (!streq(op_name, "="))
             {
-                fprintf(stream, " \\%s ", op_name);
-                TexSubtreePrint(stream, node, node->right, nametable);
+                fprintf(tex_file, " \\%s ", op_name);
+                TexSubtreePrint(tex_file, node, node->right, nametable);
             }
             else
             {
-                TexSubtreePrint(stream, node, node->right, nametable);
+                TexSubtreePrint(tex_file, node, node->right, nametable);
             }
 
             break;
@@ -242,31 +283,31 @@ TexSubtreePrintRes TexSubtreePrint (FILE * stream, const TreeNode * prev, const 
                 RET_ERROR(TEX_SUBT_PRINT_ERR, "No such operation (%d)\n", (int) node->data.val);
             }
 
-            if (OPERATIONS[FindOperation((int) prev->data.val)].priority >
-                OPERATIONS[FindOperation((int) node->data.val)].priority) //! here we assume that prev is operation node
+            if (prev && OPERATIONS[FindOperation((int) prev->data.val)].priority >
+                        OPERATIONS[FindOperation((int) node->data.val)].priority) //! here we assume that prev is operation node
             {
                     print_parenthesis = 1;
             }
 
             if (print_parenthesis)
-                fprintf(stream, " ( ");
+                fprintf(tex_file, " ( ");
 
             if (OPERATIONS[opnum].opcode == DIV)
-                fprintf(stream, "\\frac");
+                fprintf(tex_file, "\\frac");
 
-            fprintf(stream, " { ");
-            TexSubtreePrint(stream, node, node->left, nametable);
-            fprintf(stream, " } ");
+            fprintf(tex_file, " { ");
+            TexSubtreePrint(tex_file, node, node->left, nametable);
+            fprintf(tex_file, " } ");
 
             if (OPERATIONS[opnum].opcode != DIV)
-                fprintf(stream, " %s ", OPERATIONS[opnum].name);
+                fprintf(tex_file, " %s ", OPERATIONS[opnum].name);
 
-            fprintf(stream, " { ");
-            TexSubtreePrint(stream, node, node->right, nametable);
-            fprintf(stream, " } ");
+            fprintf(tex_file, " { ");
+            TexSubtreePrint(tex_file, node, node->right, nametable);
+            fprintf(tex_file, " } ");
 
             if (print_parenthesis)
-                fprintf(stream, " ) ");
+                fprintf(tex_file, " ) ");
 
             break;
 
