@@ -388,10 +388,7 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
 
     NodeData data = {ERR, 0};
 
-    while(isspace(infix_tree[*offset]))
-    {
-        *offset += 1;
-    }
+    SkipSpaces(infix_tree, offset);
 
     char word[MAX_OP] = "";
 

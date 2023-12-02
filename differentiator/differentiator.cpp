@@ -33,72 +33,94 @@ TreeNode * derivative (const TreeNode * node)
     if (node->data.type == NUM) return _NUM(0);
     if (node->data.type == VAR) return _NUM(1);
 
+    TreeNode* d_node = NULL;
+
     switch ((int) node->data.val)
     {
     case EQUAL:
-        return dR;
+        d_node = dR;
+        break;
 
     case ADD:
-        return _ADD(dL, dR);
+        d_node = _ADD(dL, dR);
+        break;
 
     case SUB:
-        return _SUB(dL, dR);
+        d_node = _SUB(dL, dR);
+        break;
 
     case MUL:
-        return _ADD(_MUL(dL, cR), _MUL(cL, dR));
+        d_node = _ADD(_MUL(dL, cR), _MUL(cL, dR));
+        break;
 
     case DIV:
-        return _DIV(_SUB(_MUL(dL, cR), _MUL(cL, dR)), _POW(cR, _NUM(2)));
+        d_node = _DIV(_SUB(_MUL(dL, cR), _MUL(cL, dR)), _POW(cR, _NUM(2)));
+        break;
 
     case POW:
-        return _MUL(_ADD(_MUL(dR, _LN(cL)), _DIV(_MUL(dL, cR), cL)), _POW(cL, cR));
+        d_node = _MUL(_ADD(_MUL(dR, _LN(cL)), _DIV(_MUL(dL, cR), cL)), _POW(cL, cR));
+        break;
 
     case EXP:
-        return _MUL(dR, _EXP(cR));
+        d_node = _MUL(dR, _EXP(cR));
+        break;
 
     case LN:
-        return _MUL(dR, _DIV(_NUM(1), cR));
+        d_node = _MUL(dR, _DIV(_NUM(1), cR));
+        break;
 
     case SIN:
-        return _MUL(dR, _COS(cR));
+        d_node = _MUL(dR, _COS(cR));
+        break;
 
     case COS:
-        return _MUL(dR, _SUB(_NUM(0), _SIN(cR)));
+        d_node = _MUL(dR, _SUB(_NUM(0), _SIN(cR)));
+        break;
 
     case TG:
-        return _MUL(dR, _DIV(_NUM(1), _POW(_COS(cR), _NUM(2))));
+        d_node = _MUL(dR, _DIV(_NUM(1), _POW(_COS(cR), _NUM(2))));
+        break;
 
     case CTG:
-        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SIN(cR), _NUM(2)))));
+        d_node = _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SIN(cR), _NUM(2)))));
+        break;
 
     case ASIN:
-        return _MUL(dR, _DIV(_NUM(1), _POW(_SUB(_NUM(1), _POW(cR, _NUM(2))), _NUM(0.5))));
+        d_node = _MUL(dR, _DIV(_NUM(1), _POW(_SUB(_NUM(1), _POW(cR, _NUM(2))), _NUM(0.5))));
+        break;
 
     case ACOS:
-        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SUB(_NUM(1), _POW(cR, _NUM(2))), _NUM(0.5)))));
+        d_node = _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SUB(_NUM(1), _POW(cR, _NUM(2))), _NUM(0.5)))));
+        break;
 
     case ATG:
-        return _MUL(dR, _DIV(_NUM(1), _ADD(_NUM(1), _POW(cR, _NUM(2)))));
+        d_node = _MUL(dR, _DIV(_NUM(1), _ADD(_NUM(1), _POW(cR, _NUM(2)))));
+        break;
 
     case ACTG:
-        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _ADD(_NUM(1), _POW(cR, _NUM(2))))));
+        d_node = _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _ADD(_NUM(1), _POW(cR, _NUM(2))))));
+        break;
 
     case SH:
-        return _MUL(dR, _CH(cR));
+        d_node = _MUL(dR, _CH(cR));
+        break;
 
     case CH:
-        return _MUL(dR, _SH(cR));
+        d_node = _MUL(dR, _SH(cR));
+        break;
 
     case TH:
-        return _MUL(dR, _DIV(_NUM(1), _POW(_CH(cR), _NUM(2))));
+        d_node = _MUL(dR, _DIV(_NUM(1), _POW(_CH(cR), _NUM(2))));
+        break;
 
     case CTH:
-        return _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SH(cR), _NUM(2)))));
+        d_node = _MUL(dR, _SUB(_NUM(0), _DIV(_NUM(1), _POW(_SH(cR), _NUM(2)))));
+        break;
 
     default:
         RET_ERROR(NULL, "Operation %d not found\n", (int) node->data.val);
         break;
     }
 
-    return NULL;
+    return d_node;
 }

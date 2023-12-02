@@ -34,6 +34,15 @@ int TreeTexDump (const Tree * tree)
 
     char * tex_path = GetFilePath(TEX_FILE_PATH, tex_fname);
 
+    CompileTex(tex_path);
+
+    free(tex_path);
+
+    return dump_id;
+}
+
+int CompileTex(const char* tex_path)
+{
     char command[COMMAND_BUF_SIZE] = "";
     sprintf(command, "pdflatex -output-directory=%s %s ", PDF_DUMPS_PATH, tex_path);
     system(command);
@@ -42,9 +51,7 @@ int TreeTexDump (const Tree * tree)
 	                 "  rm -f %s/*.log", PDF_DUMPS_PATH, PDF_DUMPS_PATH);
     system(command);
 
-    free(tex_path);
-
-    return dump_id;
+    return 0;
 }
 
 int TreeDotDump (const char * HTML_fname, const Tree * tree)
