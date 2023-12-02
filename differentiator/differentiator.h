@@ -16,7 +16,7 @@
 
 // ===================== DSL =====================
 
-#define d(...)  Derivative(__VA_ARGS__)
+#define d(node)  Derivative(tex_file, node, nametable)
 #define c(node) SubtreeCopy(node)
 
 #define dL d(node->left)
@@ -43,12 +43,10 @@
 Tree*     Derivative (const Tree * tree);
 TreeNode* Derivative (const TreeNode* node);
 
-Tree*     DerivativeReport (FILE* tex_stream, const Tree * tree);
-TreeNode* DerivativeReport (FILE* tex_stream, const TreeNode* node, NameTable* nametable);
-
-
 TreeNode* Derivative (const TreeNode* node);
+TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nametable);
 
-int DerivativeTexReport (FILE* tex_stream, const TreeNode* d_node, const TreeNode* node, const NameTable* nametable);
+Tree*     DerivativeReport (const Tree* tree);
+TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, const NameTable* nametable);
 
 #endif // DIFFERENTIATOR_H

@@ -28,26 +28,14 @@ Tree* Derivative (const Tree * tree)
     return tree_derivative;
 }
 
-Tree* DerivativeReport (FILE* tex_stream, const Tree * tree)
+TreeNode* Derivative (const TreeNode* node)
 {
-    assert(tree);
-    if (!tree) RET_ERROR (NULL, "Tree null pointer");
+    assert(node);
 
-    char tex_fname[MAX_TREE_FNAME] = "";
-
-    FILE* tree_file = InitTexDump(tree, tex_fname);
-
-    Tree* tree_derivative = (Tree*) calloc(1, sizeof(Tree));
-
-    NameTableCopy (&tree_derivative->nametable, &tree->nametable);
-
-    // tree_derivative->root = TreeNodeCtor (EQUAL, UN_OP, NULL,
-                                    // DerivativeReport (tex_stream, tree->root, &tree_derivative->nametable));
-
-    return tree_derivative;
+    return Derivative(NULL, node, NULL);
 }
 
-TreeNode* Derivative (const TreeNode* node)
+TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nametable)
 {
     if (!node) return NULL;
 
@@ -145,18 +133,45 @@ TreeNode* Derivative (const TreeNode* node)
         break;
     }
 
+    if (tex_file && (int) node->data.val != EQUAL)
+    {
+        fprintf(tex_file, "Derivative of \n");
+        fprintf(tex_file, "$$  (");
+        TexSubtreePrint(tex_file, NULL, node, nametable);
+        fprintf(tex_file, ")'  $$\n");
+
+        fprintf(tex_file, "is equal\n");
+        fprintf(tex_file, "$$  ");
+        TexSubtreePrint(tex_file, node, d_node, nametable);
+        fprintf(tex_file, "  $$\n");
+    }
     return d_node;
 }
 
-int DerivativeTexReport (FILE* tex_stream, const TreeNode* d_node, const TreeNode* node, const NameTable* nametable)
+Tree* DerivativeReport (const Tree* tree)
 {
-    if (!tex_stream) RET_ERROR(1, "Tex stream null pointer");
-    if (!nametable)  RET_ERROR(1, "Nametable null pointer");
+    assert(tree);
 
-    // derivative of
-    TexSubtreePrint(tex_stream, NULL, node, nametable);
-    // is equal
-    TexSubtreePrint(tex_stream, NULL, d_node, nametable);
+    Tree* diff_tree = TreeCtor();
+    NameTableCopy(&diff_tree->nametable, &tree->nametable);
 
-    return 0;
+    char tex_path[MAX_PATH] = "";
+    FILE* tex_file = InitTexDump(diff_tree, tex_path);
+
+    diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL,
+                                    SubtreeDerivativeTexReport(tex_file, tree->root,
+                                                               &diff_tree->nametable));
+
+    ConcludeTexDump(tex_file, tex_path);
+
+    CompileLatex(tex_path);
+
+    return diff_tree;
+}
+
+TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, const NameTable* nametable)
+{
+    if (!tex_file) RET_ERROR(NULL, "Tex stream null pointer");
+
+    return Derivative(tex_file, node, nametable);
 }
