@@ -129,9 +129,9 @@ int TreeNodeDtor (TreeNode * node)
 
 // ============================================================================================
 
-Tree * TreeCtor ()
+Tree* TreeCtor ()
 {
-    Tree * tree = (Tree *) calloc(1, sizeof(Tree));
+    Tree* tree = (Tree*) calloc (1, sizeof (Tree));
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
