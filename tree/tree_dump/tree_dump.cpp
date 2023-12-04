@@ -202,13 +202,13 @@ DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
 {
     assert(dot_fname);
     assert(tree);
-    if (!dot_fname) RET_ERROR(DOT_PRINT_ERR, "Tex filename null pointer\n");
-    if (!tree)      RET_ERROR(DOT_PRINT_ERR, "Tree null pointer\n");
+    if (!dot_fname) RET_ERROR (DOT_PRINT_ERR, "Tex filename null pointer\n");
+    if (!tree)      RET_ERROR (DOT_PRINT_ERR, "Tree null pointer\n");
 
-    char * dot_path = GetFilePath(DOT_FILE_PATH, dot_fname);
+    char * dot_path = GetFilePath (DOT_FILE_PATH, dot_fname);
 
     FILE * dot_file = fopen (dot_path, "wb");
-
+    PRINTF_DEBUG("dot_file[%p]\n", dot_file);
     fprintf (dot_file, "digraph TREE {\n"
                         "bgcolor =\"%s\"", GRAPH_BGCLR);
 

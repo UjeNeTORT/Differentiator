@@ -26,11 +26,33 @@ const double EPS = 1e-7;
 const double EXPONENT = 2.718281828;
 const double PI       = 3.141592654;
 
+// ===================== DSL =====================
+
+#define TYPE(node) node->data.type
+#define VAL(node)  node->data.val
+
+// ===============================================
+
 typedef enum
 {
     TREE_DTOR_SUCCESS    = 0,
     TREE_DTOR_ERR_PARAMS = 1,
 } TreeDtorRes;
+
+typedef enum
+{
+    NAMETABLE_CTOR_SUCCESS    = 0,
+    NAMETABLE_CTOR_ERR        = 1,
+    NAMETABLE_CTOR_ERR_PARAMS = 2,
+} NameTableCtorRes;
+
+
+typedef enum
+{
+    NAMETABLE_DTOR_SUCCESS    = 0,
+    NAMETABLE_DTOR_ERR        = 1,
+    NAMETABLE_DTOR_ERR_PARAMS = 2,
+} NameTableDtorRes;
 
 typedef enum
 {
@@ -137,6 +159,9 @@ int       TreeNodeDtor (TreeNode * node);
 
 Tree*       TreeCtor   ();
 TreeDtorRes TreeDtor   (Tree * tree);
+
+NameTableCtorRes NameTableCtor (NameTable* nametable);
+NameTableDtorRes NameTableDtor (NameTable* nametable);
 
 Tree*            TreeCopy      (const Tree * tree);
 TreeNode*        SubtreeCopy   (TreeNode * node);

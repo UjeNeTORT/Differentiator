@@ -133,6 +133,8 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nam
         break;
     }
 
+    // todo treesimplify
+
     if (tex_file && (int) node->data.val != EQUAL)
     {
         fprintf(tex_file, "%s\n", MATAN_PHRASES[rand() % MATAN_PHRASES_COUNT]);
@@ -145,6 +147,90 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nam
         fprintf(tex_file, "  $$\n");
     }
     return d_node;
+}
+
+TreeSimplifyRes TreeSimplify (Tree* tree)
+{
+    assert(tree);
+    if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
+
+    TreeSimplifyRes ret_val = TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+
+    int tree_changed = 0;
+
+    do
+    {
+        ret_val = TreeSimplifyConstants (tree, &tree_changed);
+        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+
+        ret_val = TreeSimplifyNeutrals  (tree, &tree_changed);
+        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+
+    } while (tree_changed == 1);
+
+    return ret_val;
+}
+
+TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_changed_flag)
+{
+    assert(tree);
+    if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
+
+    TreeSimplifyRes ret_val = TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+
+    int local_tree_changed_flag = 0;
+
+    do
+    {
+        local_tree_changed_flag = 0;
+        ret_val = SubtreeSimplifyConstants (tree->root, &local_tree_changed_flag);
+        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+    } while (local_tree_changed_flag);
+
+    if (ret_val == TREE_SIMPLIFY_SUCCESS) *tree_changed_flag += 1;
+
+    return ret_val;
+}
+
+TreeSimplifyRes TreeSimplifyNeutrals (Tree* tree, int* tree_changed_flag)
+{
+
+}
+
+TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag)
+{
+    assert(node);
+    assert(tree_changed_flag);
+    if (!tree_changed_flag)
+               RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "flag null pointer");
+
+    if (!node)
+        return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+
+    if (TYPE(node) == NUM || TYPE(node) == VAR)
+        return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+
+    if (TYPE(node) == UN_OP)
+        return SubtreeSimplifyConstants (node->right, tree_changed_flag);
+
+    TreeSimplifyRes ret_val = TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+
+    if (TYPE(node) == BI_OP)
+    {
+        ret_val = SubtreeSimplifyConstants (node->left,  tree_changed_flag);
+        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) return ret_val;
+
+        ret_val = SubtreeSimplifyConstants (node->right, tree_changed_flag);
+
+        return ret_val;
+    }
+
+    return ret_val;
+}
+
+TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag)
+{
+
 }
 
 Tree* DerivativeReport (const Tree* tree)

@@ -41,11 +41,26 @@
 
 // ===============================================
 
+typedef enum
+{
+    TREE_SIMPLIFY_SUCCESS            = 0,
+    TREE_SIMPLIFY_UNTOUCHED_SUCCESS  = 1,
+    TREE_SIMLIFY_ERR_PARAMS          = 2,
+    TREE_SIMPLIFY_ERR                = 3,
+} TreeSimplifyRes;
+
 Tree*     Derivative (const Tree * tree);
 TreeNode* Derivative (const TreeNode* node);
 
 TreeNode* Derivative (const TreeNode* node);
 TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nametable);
+
+TreeSimplifyRes TreeSimplify (Tree* tree);
+TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_canged_flag);
+TreeSimplifyRes TreeSimplifyNeutrals  (Tree* tree, int* tree_canged_flag);
+
+TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag);
+TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag);
 
 Tree*     DerivativeReport (const Tree* tree);
 TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, const NameTable* nametable);

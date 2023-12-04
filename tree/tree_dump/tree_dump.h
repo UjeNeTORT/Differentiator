@@ -14,7 +14,7 @@
 
 #include "../tree.h"
 
-const char DOT_FILE_PATH[]   = "tree/tree_dump/dumps/dot_files/";
+const char DOT_FILE_PATH[]   = "tree/tree_dump/dumps/dot/";
 const char GRAPH_SVGS_PATH[] = "tree/tree_dump/dumps/png/";
 const char HTML_DUMPS_PATH[] = "tree/tree_dump/dumps/dumps/";
 const char TEX_FILE_PATH[]   = "tree/tree_dump/dumps/tex/";
@@ -56,6 +56,7 @@ int   TreeTexDump     (const Tree* tree);
 int   CompileLatex    (const char* tex_path);
 int   ConcludeTexDump (FILE* tex_file, char * tex_path);
 
+// todo
 int TreeDotDump (const char * fname, const Tree * tree);
 int CompileDot  (char* dot_fname, char* detailed_dot_fname, int dump_id);
 int WriteHTML   (const char * HTML_fname, int dump_id);
