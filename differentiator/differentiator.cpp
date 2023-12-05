@@ -161,10 +161,10 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     do
     {
         ret_val = TreeSimplifyConstants (tree, &tree_changed);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+        if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
 
         ret_val = TreeSimplifyNeutrals  (tree, &tree_changed);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+        if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
 
     } while (tree_changed == 1);
 
@@ -184,7 +184,7 @@ TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_changed_flag)
     {
         local_tree_changed_flag = 0;
         ret_val = SubtreeSimplifyConstants (tree->root, &local_tree_changed_flag);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+        if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
     } while (local_tree_changed_flag);
 
     if (ret_val == TREE_SIMPLIFY_SUCCESS) *tree_changed_flag += 1;
@@ -199,31 +199,48 @@ TreeSimplifyRes TreeSimplifyNeutrals (Tree* tree, int* tree_changed_flag)
 
 TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag)
 {
-    assert(node);
     assert(tree_changed_flag);
     if (!tree_changed_flag)
                RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "flag null pointer");
 
-    if (!node)
-        return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+    if (!node) return TREE_SIMPLIFY_UNTOUCHED_SUCCESS; // maybe i dont need this return code. Touched or not is accessable through the tree_changed flag
 
-    if (TYPE(node) == NUM || TYPE(node) == VAR)
-        return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+    if (TYPE(node) == NUM) return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
 
-    if (TYPE(node) == UN_OP)
-        return SubtreeSimplifyConstants (node->right, tree_changed_flag);
+    if (TYPE(node) == VAR) return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
 
-    TreeSimplifyRes ret_val = TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
-
-    if (TYPE(node) == BI_OP)
+    TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
+    if (TYPE(node) == BI_OP && TYPE(node->left) == NUM && TYPE(node->right) == NUM)
     {
-        ret_val = SubtreeSimplifyConstants (node->left,  tree_changed_flag);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS || ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) return ret_val;
+        TreeEvalNums (node, &VAL(node));
+        TYPE(node) = NUM;
 
-        ret_val = SubtreeSimplifyConstants (node->right, tree_changed_flag);
+        TreeNodeDtor(node->left);
+        TreeNodeDtor(node->right);
+        node->left  = NULL;
+        node->right = NULL;
+
+        *tree_changed_flag = 1;
 
         return ret_val;
     }
+
+    if (TYPE(node) == UN_OP && TYPE(node->right) == NUM)
+    {
+        TreeEvalNums (node, &VAL(node));
+        TYPE(node) = NUM;
+
+        TreeNodeDtor(node->left);
+
+        node->left = NULL;
+
+        *tree_changed_flag = 1;
+
+        return ret_val;
+    }
+    ret_val = SubtreeSimplifyConstants (node->left, tree_changed_flag);
+    if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) return ret_val;
+    ret_val = SubtreeSimplifyConstants (node->right, tree_changed_flag);
 
     return ret_val;
 }
