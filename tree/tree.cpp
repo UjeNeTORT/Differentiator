@@ -19,7 +19,7 @@
 
 // ============================================================================================
 
-double Eval (const TreeNode * node, const NameTable * nametable)
+TreeEvalRes TreeEvalNums (TreeNode* node, double* result)
 {
     assert(node);
 
@@ -32,77 +32,240 @@ double Eval (const TreeNode * node, const NameTable * nametable)
     {
 
     case NUM:
-        return VAL(node);
-
-    case VAR:
-        return nametable->vals[(int) VAL(node)];
+        *result = VAL(node);
+        break;
 
     case UN_OP:
-        right = Eval(node->right, nametable);
+        TreeEvalNums(node->right, &right);
 
         switch ((int) VAL(node))
         {
         case EQUAL:
-            return right;
+            *result = right;
+            break;
+
         case EXP:
-            return pow(EXPONENT, right);
+            *result = pow(EXPONENT, right);
+            break;
+
         case LN:
-            return log(right);
+            *result = log(right);
+            break;
+
         case SIN:
-            return sin(right);
+            *result = sin(right);
+            break;
+
         case COS:
-            return cos(right);
+            *result = cos(right);
+            break;
+
         case TG:
-            return tan(right);
+            *result = tan(right);
+            break;
+
         case CTG:
-            return 1 / tan(right);
+            *result = 1 / tan(right);
+            break;
+
         case ASIN:
-            return asin(right);
+            *result = asin(right);
+            break;
+
         case ACOS:
-            return acos(right);
+            *result = acos(right);
+            break;
+
         case ATG:
-            return atan(right);
+            *result = atan(right);
+            break;
+
         case ACTG:
-            return PI / 2 - atan(right);
+            *result = PI / 2 - atan(right);
+            break;
+
         case SH:
-            return sinh(right);
+            *result = sinh(right);
+            break;
+
         case CH:
-            return cosh(right);
+            *result = cosh(right);
+            break;
+
         case TH:
-            return tanh(right);
+            *result = tanh(right);
+            break;
+
         case CTH:
-            return 1 / tanh(right);
+            *result = 1 / tanh(right);
+            break;
+
 
         default:
-            RET_ERROR(0, "Unknown operator: %d", (int) VAL(node));
+            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
         }
 
-        return 0;
-
     case BI_OP:
-        left  = Eval(node->left, nametable);
-        right = Eval(node->right, nametable);
+        TreeEvalNums (node->left, &left);
+        TreeEvalNums (node->right, &right);
 
         switch ((int) VAL(node))
         {
         case ADD:
-            return left + right;
+            *result = left + right;
+            break;
+
         case SUB:
-            return left - right;
+            *result = left - right;
+            break;
+
         case MUL:
-            return left * right;
+            *result = left * right;
+            break;
+
         case DIV:
-            return left / right;
+            *result = left / right;
+            break;
+
         case POW:
-            return pow(left,right);
+            *result = pow(left,right);
+            break;
+
         default:
-            RET_ERROR(0, "Unknown operator: %d", (int) VAL(node));
+            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
         }
 
-        return 0;
+    default:
+        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed");
     }
 
-    return 0;
+    return TREE_EVAL_SUCCESS;
+}
+
+TreeEvalRes TreeEval (const TreeNode * node, const NameTable * nametable, double* result)
+{
+    assert(node);
+
+    // todo change assert to if !node
+
+    double left  = 0;
+    double right = 0;
+
+    TreeEvalRes ret_val = TREE_EVAL_SUCCESS;
+
+    switch (TYPE(node))
+    {
+
+    case NUM:
+        *result = VAL(node);
+        break;
+
+    case UN_OP:
+        ret_val = TreeEval (node->right, nametable, &right);
+
+        switch ((int) VAL(node))
+        {
+        case EQUAL:
+            *result = right;
+            break;
+
+        case EXP:
+            *result = pow(EXPONENT, right);
+            break;
+
+        case LN:
+            *result = log(right);
+            break;
+
+        case SIN:
+            *result = sin(right);
+            break;
+
+        case COS:
+            *result = cos(right);
+            break;
+
+        case TG:
+            *result = tan(right);
+            break;
+
+        case CTG:
+            *result = 1 / tan(right);
+            break;
+
+        case ASIN:
+            *result = asin(right);
+            break;
+
+        case ACOS:
+            *result = acos(right);
+            break;
+
+        case ATG:
+            *result = atan(right);
+            break;
+
+        case ACTG:
+            *result = PI / 2 - atan(right);
+            break;
+
+        case SH:
+            *result = sinh(right);
+            break;
+
+        case CH:
+            *result = cosh(right);
+            break;
+
+        case TH:
+            *result = tanh(right);
+            break;
+
+        case CTH:
+            *result = 1 / tanh(right);
+            break;
+
+
+        default:
+            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
+        }
+
+    case BI_OP:
+        ret_val = TreeEval (node->left, nametable, &left);
+        if (ret_val != TREE_EVAL_SUCCESS) return ret_val;
+        ret_val = TreeEval (node->right, nametable, &right);
+
+        switch ((int) VAL(node))
+        {
+        case ADD:
+            *result = left + right;
+            break;
+
+        case SUB:
+            *result = left - right;
+            break;
+
+        case MUL:
+            *result = left * right;
+            break;
+
+        case DIV:
+            *result = left / right;
+            break;
+
+        case POW:
+            *result = pow(left,right);
+            break;
+
+        default:
+            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
+        }
+
+    default:
+        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed");
+    }
+
+    return ret_val;
 }
 
 // ============================================================================================
