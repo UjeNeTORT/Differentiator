@@ -14,39 +14,41 @@
 
 #include "differentiator.h"
 
-Tree* Derivative (const Tree * tree)
+Tree* Derivative (Tree * tree)
 {
     assert (tree);
     if (!tree) RET_ERROR (NULL, "Tree null pointer");
 
-    Tree* tree_derivative = (Tree*) calloc(1, sizeof(Tree));
+    Tree* diff_tree = (Tree*) calloc(1, sizeof(Tree));
 
-    NameTableCopy (&tree_derivative->nametable, &tree->nametable);
+    NameTableCopy (&diff_tree->nametable, &tree->nametable);
 
-    tree_derivative->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL, Derivative (tree->root));
+    diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL, Derivative (tree->root, diff_tree));
 
-    return tree_derivative;
+    TreeSimplify (diff_tree);
+
+    return diff_tree;
 }
 
-TreeNode* Derivative (const TreeNode* node)
+TreeNode* Derivative (const TreeNode* node, Tree* tree)
 {
     assert(node);
 
-    return Derivative(NULL, node, NULL);
+    return Derivative (NULL, node, tree);
 }
 
-TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nametable)
+TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
 {
     if (!node) return NULL;
 
-    if (node->data.type == ERR) RET_ERROR (NULL, "Error node passed to differentiation function\n");
+    if (TYPE(node) == ERR) RET_ERROR (NULL, "Error node passed to differentiation function\n");
 
-    if (node->data.type == NUM) return _NUM(0);
-    if (node->data.type == VAR) return _NUM(1);
+    if (TYPE(node) == NUM) return _NUM(0);
+    if (TYPE(node) == VAR) return _NUM(1);
 
     TreeNode* d_node = NULL;
 
-    switch ((int) node->data.val)
+    switch ((int) VAL(node))
     {
     case EQUAL:
         d_node = dR;
@@ -129,23 +131,22 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, const NameTable* nam
         break;
 
     default:
-        RET_ERROR(NULL, "Operation %d not found\n", (int) node->data.val);
+        RET_ERROR(NULL, "Operation %d not found\n", (int) VAL(node));
         break;
     }
 
-    // todo treesimplify
-
-    if (tex_file && (int) node->data.val != EQUAL)
+    if (tex_file && (int) VAL(node) != EQUAL)
     {
         fprintf(tex_file, "%s\n", MATAN_PHRASES[rand() % MATAN_PHRASES_COUNT]);
         fprintf(tex_file, "$$  (");
-        TexSubtreePrint(tex_file, NULL, node, nametable);
+        TexSubtreePrint(tex_file, NULL, node, tree->nametable);
         fprintf(tex_file, ")\' = $$\n");
 
         fprintf(tex_file, "$$  ");
-        TexSubtreePrint(tex_file, node, d_node, nametable);
+        TexSubtreePrint(tex_file, node, d_node, tree->nametable);
         fprintf(tex_file, "  $$\n");
     }
+
     return d_node;
 }
 
@@ -160,8 +161,7 @@ Tree* DerivativeReport (const Tree* tree)
     FILE* tex_file = InitTexDump(diff_tree, tex_path);
 
     diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
-                                    SubtreeDerivativeTexReport(tex_file, tree->root,
-                                                               &diff_tree->nametable));
+                                    SubtreeDerivativeTexReport(tex_file, tree->root, diff_tree));
 
     ConcludeTexDump(tex_file, tex_path);
 
@@ -170,9 +170,9 @@ Tree* DerivativeReport (const Tree* tree)
     return diff_tree;
 }
 
-TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, const NameTable* nametable)
+TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, Tree* tree)
 {
     if (!tex_file) RET_ERROR(NULL, "Tex stream null pointer");
 
-    return Derivative(tex_file, node, nametable);
+    return Derivative(tex_file, node, tree);
 }
