@@ -363,6 +363,73 @@ NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src)
 
 // ============================================================================================
 
+LiftChildToParentRes LiftChildToParent (TreeNode* node, NodeLocation child_location)
+{
+    if (!node) return LIFT_CHILD_TO_PARENT_SUCCESS;
+
+    if (child_location == LEFT)
+    {
+        if (!node->left)
+            RET_ERROR (LIFT_CHILD_TO_PARENT_ERR, "Nothing to lift: left null pointer");
+
+        VAL(node)  = VAL(node->left);
+        TYPE(node) = TYPE(node->left);
+        TreeNodeDtor(node->right);
+
+        if (node->left->left)  node->left->left->prev  = node;
+        if (node->left->right) node->left->right->prev = node;
+
+        node->right = node->left->right;
+        TreeNode* old_left = node->left;
+        node->left = node->left->left;
+        TreeNodeDtor(old_left);
+
+        return LIFT_CHILD_TO_PARENT_SUCCESS;
+    }
+    if (child_location == RIGHT)
+    {
+        if (!node->right)
+            RET_ERROR (LIFT_CHILD_TO_PARENT_ERR, "Nothing to lift: right null pointer");
+
+        VAL(node)  = VAL(node->right);
+        TYPE(node) = TYPE(node->right);
+        TreeNodeDtor(node->left);
+
+        if (node->right->left)  node->right->left->prev  = node;
+        if (node->right->right) node->right->right->prev = node;
+
+        node->left = node->right->left;
+        TreeNode* old_right = node->right;
+        node->right = node->right->right;
+        TreeNodeDtor(old_right);
+
+        return LIFT_CHILD_TO_PARENT_SUCCESS;
+    }
+
+    return LIFT_CHILD_TO_PARENT_ERR;
+}
+
+// ============================================================================================
+
+SubtreeToNumRes SubtreeToNum (TreeNode* node, double val)
+{
+    assert(node);
+    if (!node) RET_ERROR(SUBTR_TO_NUM_ERR_PARAMS, "Node null pointer");
+
+    VAL(node)  = val;
+    TYPE(node) = NUM;
+
+    SubtreeDtor (node->left);
+    SubtreeDtor (node->right);
+
+    node->left  = NULL;
+    node->right = NULL;
+
+    return SUBTR_TO_NUM_SUCCESS;
+}
+
+// ============================================================================================
+
 TraverseTreeRes TraverseSubtree (TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
 {
     if (!node) return TRVRS_TREE_SUCCESS;

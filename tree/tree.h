@@ -68,6 +68,18 @@ typedef enum
 
 typedef enum
 {
+    LIFT_CHILD_TO_PARENT_SUCCESS    = 0,
+    LIFT_CHILD_TO_PARENT_ERR        = 1,
+} LiftChildToParentRes;
+
+typedef enum
+{
+    SUBTR_TO_NUM_SUCCESS    = 0,
+    SUBTR_TO_NUM_ERR        = 1,
+    SUBTR_TO_NUM_ERR_PARAMS = 2,
+} SubtreeToNumRes;
+typedef enum
+{
     TRVRS_TREE_SUCCESS    = 0,
     TRVRS_TREE_ERR        = 1,
     TRVRS_TREE_ERR_PARAMS = 2,
@@ -178,6 +190,9 @@ NameTableDtorRes NameTableDtor (NameTable* nametable);
 Tree*            TreeCopy      (const Tree * tree);
 TreeNode*        SubtreeCopy   (TreeNode * node);
 NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src);
+
+LiftChildToParentRes LiftChildToParent (TreeNode* node, NodeLocation child_location);
+SubtreeToNumRes      SubtreeToNum      (TreeNode* node, double val);
 
 TraverseTreeRes  TraverseTree    (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
 TraverseTreeRes  TraverseSubtree (TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
