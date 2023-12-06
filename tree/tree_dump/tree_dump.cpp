@@ -81,7 +81,7 @@ TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree * tree)
     fprintf(tex_file, "$$  ");
 
     if (tree->root)
-        TexSubtreePrint (tex_file, tree->root, tree->root->right, &tree->nametable);
+        TexSubtreePrint (tex_file, tree->root, tree->root->right, tree->nametable);
     else
     {
         // it is not in the beginning because we may still need other info about the tree
@@ -208,7 +208,7 @@ DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
     char * dot_path = GetFilePath (DOT_FILE_PATH, dot_fname);
 
     FILE * dot_file = fopen (dot_path, "wb");
-    PRINTF_DEBUG("dot_file[%p]\n", dot_file);
+
     fprintf (dot_file, "digraph TREE {\n"
                         "bgcolor =\"%s\"", GRAPH_BGCLR);
 
@@ -223,7 +223,7 @@ DotTreePrintRes DotTreePrint (const char * dot_fname, const Tree * tree)
     return DOT_PRINT_SUCCESS;
 }
 
-TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const NameTable* nametable)
+TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const NameTable nametable)
 {
     assert(tex_file);
 
@@ -239,21 +239,21 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
     int opnum = 0;
     int print_parenthesis = 0;
 
-    switch(node->data.type)
+    switch(TYPE(node))
     {
         case ERR:
             RET_ERROR(TEX_SUBT_PRINT_ERR, "Printer received error node");
 
         case NUM:
-            fprintf(tex_file, " {%.3lf} ", node->data.val);
+            fprintf(tex_file, " {%.3lf} ", VAL(node));
             break;
 
         case VAR:
-            fprintf(tex_file, " {%s} ", nametable->names[(int) node->data.val]);
+            fprintf(tex_file, " {%s} ", nametable.names[(int) VAL(node)]);
             break;
 
         case UN_OP:
-            opnum = FindOperation((int) node->data.val);
+            opnum = FindOperation((int) VAL(node));
             op_name = OPERATIONS[opnum].name;
 
             if (!streq(op_name, "="))
@@ -269,13 +269,13 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
             break;
 
         case BI_OP:
-            if ((opnum = FindOperation((int) node->data.val)) == ILL_OPNUM)
+            if ((opnum = FindOperation((int) VAL(node))) == ILL_OPNUM)
             {
-                RET_ERROR(TEX_SUBT_PRINT_ERR, "No such operation (%d)\n", (int) node->data.val);
+                RET_ERROR(TEX_SUBT_PRINT_ERR, "No such operation (%d)\n", (int) VAL(node));
             }
 
             if (prev && OPERATIONS[FindOperation((int) prev->data.val)].priority >
-                        OPERATIONS[FindOperation((int) node->data.val)].priority) //! here we assume that prev is operation node
+                        OPERATIONS[FindOperation((int) VAL(node))].priority) //! here we assume that prev is operation node
             {
                 print_parenthesis = 1;
             }
@@ -303,7 +303,7 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
             break;
 
         default:
-            RET_ERROR(TEX_SUBT_PRINT_ERR, "Invalid node type \"%d\"\n", node->data.type);
+            RET_ERROR(TEX_SUBT_PRINT_ERR, "Invalid node type \"%d\"\n", TYPE(node));
     }
 
     return TEX_SUBT_PRINT_SUCCESS;
@@ -325,7 +325,7 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 
     int opnum = 0;
 
-    switch (node->data.type)
+    switch (TYPE(node))
     {
     case ERR:
         color = GRAPH_ERRCLR;
@@ -334,18 +334,18 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
 
     case NUM:
         color = GRAPH_NUMCLR;
-        sprintf(node_data, "%.2lf", node->data.val);
+        sprintf(node_data, "%.2lf", VAL(node));
         break;
 
     case VAR:
         color = GRAPH_VARCLR;
-        sprintf(node_data, "%s", nametable.names[(int) node->data.val]); // get varname from nametable
+        sprintf(node_data, "%s", nametable.names[(int) VAL(node)]); // get varname from nametable
         break;
 
     case BI_OP:
         color = GRAPH_OPCLR;
 
-        opnum = FindOperation((int) node->data.val);
+        opnum = FindOperation((int) VAL(node));
         sprintf(node_data, "%s", OPERATIONS[opnum].name);
 
         break;
@@ -353,7 +353,7 @@ int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable)
     case UN_OP: // ! doesnt work
         color = GRAPH_OPCLR;
 
-        opnum = FindOperation((int) node->data.val);
+        opnum = FindOperation((int) VAL(node));
         sprintf(node_data, "%s", OPERATIONS[opnum].name);
         break;
     }
@@ -402,7 +402,7 @@ int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nam
 
     const char * color = "";
 
-    switch (node->data.type)
+    switch (TYPE(node))
     {
     case NUM:
         color = GRAPH_NUMCLR;
@@ -425,7 +425,7 @@ int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nam
     }
 
     fprintf (stream, "\tdetailed_node_%d [style = filled, shape = record, fillcolor = \"%s\", fontcolor = \"%s\"];\n", node_id, color, GRAPH_TEXTCLR);
-    fprintf (stream, "\tdetailed_node_%d [label = \"{type = %d | val = %.3lf}\"];\n", node_id, node->data.type, node->data.val);
+    fprintf (stream, "\tdetailed_node_%d [label = \"{type = %d | val = %.3lf}\"];\n", node_id, TYPE(node), VAL(node));
 
     if (int left_subtree_id = DotSubtreeDetailedPrint (stream, (const TreeNode *) node->left, nametable))
         fprintf (stream, "\tdetailed_node_%d -> detailed_node_%d;\n", node_id, left_subtree_id);
