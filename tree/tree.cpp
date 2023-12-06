@@ -21,132 +21,7 @@
 
 TreeEvalRes TreeEvalNums (TreeNode* node, double* result)
 {
-    assert(node);
-
-    // todo change assert to if !node
-
-    double left  = 0;
-    double right = 0;
-
-    switch (TYPE(node))
-    {
-
-    case NUM:
-        *result = VAL(node);
-        break;
-
-    case UN_OP:
-        TreeEvalNums(node->right, &right);
-
-        switch ((int) VAL(node))
-        {
-        case EQUAL:
-            *result = right;
-            break;
-
-        case EXP:
-            *result = pow(EXPONENT, right);
-            break;
-
-        case LN:
-            *result = log(right);
-            break;
-
-        case SIN:
-            *result = sin(right);
-            break;
-
-        case COS:
-            *result = cos(right);
-            break;
-
-        case TG:
-            *result = tan(right);
-            break;
-
-        case CTG:
-            *result = 1 / tan(right);
-            break;
-
-        case ASIN:
-            *result = asin(right);
-            break;
-
-        case ACOS:
-            *result = acos(right);
-            break;
-
-        case ATG:
-            *result = atan(right);
-            break;
-
-        case ACTG:
-            *result = PI / 2 - atan(right);
-            break;
-
-        case SH:
-            *result = sinh(right);
-            break;
-
-        case CH:
-            *result = cosh(right);
-            break;
-
-        case TH:
-            *result = tanh(right);
-            break;
-
-        case CTH:
-            *result = 1 / tanh(right);
-            break;
-
-
-        default:
-            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
-        }
-
-    case BI_OP:
-        TreeEvalNums (node->left, &left);
-        TreeEvalNums (node->right, &right);
-
-        switch ((int) VAL(node))
-        {
-        case ADD:
-            *result = left + right;
-            break;
-
-        case SUB:
-            *result = left - right;
-            break;
-
-        case MUL:
-            *result = left * right;
-            break;
-
-        case DIV:
-            *result = left / right;
-            break;
-
-        case POW:
-            *result = pow(left,right);
-            break;
-
-        default:
-            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
-        }
-
-    default:
-        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed");
-    }
-
-    return TREE_EVAL_SUCCESS;
-}
-
-TreeEvalRes TreeEval (const TreeNode * node, const NameTable * nametable, double* result)
-{
-    assert(node);
-
-    // todo change assert to if !node
+    if (!node) return TREE_EVAL_SUCCESS;
 
     double left  = 0;
     double right = 0;
@@ -161,105 +36,64 @@ TreeEvalRes TreeEval (const TreeNode * node, const NameTable * nametable, double
         break;
 
     case UN_OP:
-        ret_val = TreeEval (node->right, nametable, &right);
+        if (TreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        switch ((int) VAL(node))
-        {
-        case EQUAL:
-            *result = right;
-            break;
+        ret_val = TreeEvalUnOp(node, right, result);
+        break;
 
-        case EXP:
-            *result = pow(EXPONENT, right);
-            break;
+    case BI_OP:
+        if (TreeEvalNums(node->left, &left) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        case LN:
-            *result = log(right);
-            break;
+        if (TreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        case SIN:
-            *result = sin(right);
-            break;
+        ret_val = TreeEvalBiOp(node, left, right, result);
+        break;
 
-        case COS:
-            *result = cos(right);
-            break;
+    default:
+        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed (received node type = %d)", TYPE(node));
+    }
 
-        case TG:
-            *result = tan(right);
-            break;
+    return ret_val;
+}
 
-        case CTG:
-            *result = 1 / tan(right);
-            break;
+TreeEvalRes TreeEval (TreeNode * node, const NameTable * nametable, double* result)
+{
+    if (!node) return TREE_EVAL_SUCCESS;
 
-        case ASIN:
-            *result = asin(right);
-            break;
+    double left  = 0;
+    double right = 0;
 
-        case ACOS:
-            *result = acos(right);
-            break;
+    TreeEvalRes ret_val = TREE_EVAL_SUCCESS;
 
-        case ATG:
-            *result = atan(right);
-            break;
+    switch (TYPE(node))
+    {
 
-        case ACTG:
-            *result = PI / 2 - atan(right);
-            break;
+    case NUM:
+        *result = VAL(node);
+        break;
 
-        case SH:
-            *result = sinh(right);
-            break;
+    case VAR:
+        *result = nametable->vals[(int) VAL(node)];
+        break;
 
-        case CH:
-            *result = cosh(right);
-            break;
+    case UN_OP:
+        if (TreeEval(node->right, nametable, &right) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        case TH:
-            *result = tanh(right);
-            break;
-
-        case CTH:
-            *result = 1 / tanh(right);
-            break;
-
-
-        default:
-            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
-        }
+        ret_val = TreeEvalUnOp(node, right, result);
+        break;
 
     case BI_OP:
         ret_val = TreeEval (node->left, nametable, &left);
-        if (ret_val != TREE_EVAL_SUCCESS) return ret_val;
+        if (ret_val != TREE_EVAL_SUCCESS) RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
         ret_val = TreeEval (node->right, nametable, &right);
+        if (ret_val != TREE_EVAL_SUCCESS) RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        switch ((int) VAL(node))
-        {
-        case ADD:
-            *result = left + right;
-            break;
-
-        case SUB:
-            *result = left - right;
-            break;
-
-        case MUL:
-            *result = left * right;
-            break;
-
-        case DIV:
-            *result = left / right;
-            break;
-
-        case POW:
-            *result = pow(left,right);
-            break;
-
-        default:
-            RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
-        }
+        ret_val = TreeEvalBiOp (node, left, right, result);
+        break;
 
     default:
         RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed");
@@ -270,11 +104,130 @@ TreeEvalRes TreeEval (const TreeNode * node, const NameTable * nametable, double
 
 // ============================================================================================
 
-TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * right)
+TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result)
+{
+    assert(result);
+    if (!result) return TREE_EVAL_ERR_PARAMS;
+    if (TYPE(node) != UN_OP) RET_ERROR(TREE_EVAL_ERR_PARAMS, "You can not pass anything but BI_OP node to this function");
+
+    if (!node) return TREE_EVAL_SUCCESS;
+
+    switch ((int) VAL(node))
+    {
+    case EQUAL:
+        *result = right;
+        break;
+
+    case EXP:
+        *result = pow(EXPONENT, right);
+        break;
+
+    case LN:
+        *result = log(right);
+        break;
+
+    case SIN:
+        *result = sin(right);
+        break;
+
+    case COS:
+        *result = cos(right);
+        break;
+
+    case TG:
+        *result = tan(right);
+        break;
+
+    case CTG:
+        *result = 1 / tan(right);
+        break;
+
+    case ASIN:
+        *result = asin(right);
+        break;
+
+    case ACOS:
+        *result = acos(right);
+        break;
+
+    case ATG:
+        *result = atan(right);
+        break;
+
+    case ACTG:
+        *result = PI / 2 - atan(right);
+        break;
+
+    case SH:
+        *result = sinh(right);
+        break;
+
+    case CH:
+        *result = cosh(right);
+        break;
+
+    case TH:
+        *result = tanh(right);
+        break;
+
+    case CTH:
+        *result = 1 / tanh(right);
+        break;
+
+    default:
+        RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
+    }
+
+    return TREE_EVAL_SUCCESS;
+}
+
+// ============================================================================================
+
+TreeEvalRes TreeEvalBiOp (TreeNode* node, double left, double right, double* result)
+{
+    assert(result);
+    if (!result) return TREE_EVAL_ERR_PARAMS;
+    if (TYPE(node) != BI_OP) RET_ERROR(TREE_EVAL_ERR_PARAMS, "You can not pass anything but BI_OP node to this function");
+
+    if (!node) return TREE_EVAL_SUCCESS;
+
+    switch ((int) VAL(node))
+    {
+    case ADD:
+        *result = left + right;
+        break;
+
+    case SUB:
+        *result = left - right;
+        break;
+
+    case MUL:
+        *result = left * right;
+        break;
+
+    case DIV:
+        *result = left / right;
+        break;
+
+    case POW:
+        *result = pow(left,right);
+        break;
+
+    default:
+        RET_ERROR(TREE_EVAL_ERR, "Unknown operator: %d", (int) VAL(node));
+    }
+
+    return TREE_EVAL_SUCCESS;
+}
+
+// ============================================================================================
+
+TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode* prev, TreeNode* left, TreeNode* right)
 {
     TreeNode * new_node = (TreeNode *) calloc(1, sizeof(TreeNode));
 
     new_node->data  = {type, val};
+    new_node->prev  = prev;
     new_node->left  = left;
     new_node->right = right;
 
@@ -372,7 +325,7 @@ TreeNode * SubtreeCopy (TreeNode * node)
 {
     if (!node) return NULL;
 
-    TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type,
+    TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type, node->prev,
                                         SubtreeCopy(node->left), SubtreeCopy(node->right));
 
     return copied;
@@ -476,7 +429,6 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
 {
     assert(infix_tree);
 
-
     SkipSpaces(infix_tree, offset);
 
     if (infix_tree[*offset] == '*')
@@ -492,14 +444,16 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
         ABORT(); // !
     }
 
-    TreeNode * node = TreeNodeCtor(0, NUM, NULL, NULL);
+    TreeNode * node = TreeNodeCtor(0, NUM, NULL, NULL, NULL);
     *offset += 1; // skip (
 
     node->left = ReadSubtree(infix_tree, nametable, offset);
+    node->left->prev = node;
 
     node->data = ReadNodeData(infix_tree, nametable, offset);
 
     node->right = ReadSubtree(infix_tree, nametable, offset);
+    node->right->prev = node;
 
     while(infix_tree[*offset] != ')')
     {

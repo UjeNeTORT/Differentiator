@@ -35,9 +35,10 @@ const double PI       = 3.141592654;
 
 typedef enum
 {
-    TREE_EVAL_SUCCESS   = 0,
-    TREE_EVAL_FORBIDDEN = 1,
-    TREE_EVAL_ERR       = 2,
+    TREE_EVAL_SUCCESS    = 0,
+    TREE_EVAL_ERR        = 1,
+    TREE_EVAL_ERR_PARAMS = 2,
+    TREE_EVAL_FORBIDDEN  = 3,
 } TreeEvalRes;
 
 typedef enum
@@ -145,13 +146,15 @@ struct TreeNode
 {
     NodeData data;
 
-    TreeNode * left;
-    TreeNode * right;
+    TreeNode* prev;
+
+    TreeNode* left;
+    TreeNode* right;
 };
 
 struct Tree
 {
-    TreeNode * root;
+    TreeNode* root;
     NameTable nametable;
 
     int size;
@@ -160,9 +163,11 @@ struct Tree
 typedef int (* NodeAction_t) (TreeNode * node);
 
 TreeEvalRes TreeEvalNums (TreeNode* node, double* result);
-TreeEvalRes TreeEval (const TreeNode * node, const NameTable * nametable, double* result);
+TreeEvalRes TreeEval     (TreeNode * node, const NameTable * nametable, double* result);
+TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result);
+TreeEvalRes TreeEvalBiOp (TreeNode* node, double left, double right, double* result);
 
-TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode * left, TreeNode * right);
+TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode* prev, TreeNode* left, TreeNode* right);
 int       TreeNodeDtor (TreeNode * node);
 
 Tree*       TreeCtor   ();
