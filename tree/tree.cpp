@@ -245,6 +245,17 @@ int TreeNodeDtor (TreeNode * node)
 
 // ============================================================================================
 
+int SubtreeDtor (TreeNode* node)
+{
+    assert(node);
+
+    TraverseSubtree(node, TreeNodeDtor, POSTORDER);
+
+    return 0;
+}
+
+// ============================================================================================
+
 Tree* TreeCtor ()
 {
     Tree* tree = (Tree*) calloc (1, sizeof (Tree));
@@ -352,29 +363,26 @@ NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src)
 
 // ============================================================================================
 
-TraverseTreeRes TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
+TraverseTreeRes TraverseSubtree (TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order)
 {
-    assert (tree);
-    if (!tree) RET_ERROR (TRVRS_TREE_ERR_PARAMS, "Tree null pointer");
-
     if (!node) return TRVRS_TREE_SUCCESS;
 
     if (traverse_order == PREORDER)
     {
         NodeAction (node);
-        TraverseTreeFrom (tree, node->left, NodeAction, traverse_order);
-        TraverseTreeFrom (tree, node->right, NodeAction, traverse_order);
+        TraverseSubtree (node->left, NodeAction, traverse_order);
+        TraverseSubtree (node->right, NodeAction, traverse_order);
     }
     else if (traverse_order == INORDER)
     {
-        TraverseTreeFrom (tree, node->left, NodeAction, traverse_order);
+        TraverseSubtree (node->left, NodeAction, traverse_order);
         NodeAction (node);
-        TraverseTreeFrom (tree, node->right, NodeAction, traverse_order);
+        TraverseSubtree (node->right, NodeAction, traverse_order);
     }
     else if (traverse_order == POSTORDER)
     {
-        TraverseTreeFrom (tree, node->left, NodeAction, traverse_order);
-        TraverseTreeFrom (tree, node->right, NodeAction, traverse_order);
+        TraverseSubtree (node->left, NodeAction, traverse_order);
+        TraverseSubtree (node->right, NodeAction, traverse_order);
         NodeAction (node);
     }
     else
@@ -391,7 +399,7 @@ TraverseTreeRes TraverseTree (Tree * tree, NodeAction_t NodeAction, TraverseOrde
 {
     assert (tree);
 
-    return TraverseTreeFrom(tree, tree->root, NodeAction, traverse_order);
+    return TraverseSubtree(tree->root, NodeAction, traverse_order);
 }
 
 // ============================================================================================
@@ -425,7 +433,7 @@ TreeNode * TreeFind (Tree * tree, double val, NodeType type)
 
 // ============================================================================================
 
-TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * offset)
+TreeNode* ReadSubtree (const char * infix_tree, NameTable * nametable, int * offset)
 {
     assert(infix_tree);
 
@@ -437,7 +445,8 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
 
         return NULL;
     }
-    else if (infix_tree[*offset] != '(')
+
+    if (infix_tree[*offset] != '(')
     {
         fprintf(stderr, "ReadSubTree: unknown action symbol %c (%d)\n", infix_tree[*offset], infix_tree[*offset]);
 
@@ -445,15 +454,16 @@ TreeNode * ReadSubtree (const char * infix_tree, NameTable * nametable, int * of
     }
 
     TreeNode * node = TreeNodeCtor(0, NUM, NULL, NULL, NULL);
+
     *offset += 1; // skip (
 
     node->left = ReadSubtree(infix_tree, nametable, offset);
-    node->left->prev = node;
+    if (node->left) node->left->prev = node;
 
     node->data = ReadNodeData(infix_tree, nametable, offset);
 
     node->right = ReadSubtree(infix_tree, nametable, offset);
-    node->right->prev = node;
+    if (node->right) node->right->prev = node;
 
     while(infix_tree[*offset] != ')')
     {

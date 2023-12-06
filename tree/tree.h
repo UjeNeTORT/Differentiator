@@ -21,8 +21,6 @@ const int MAX_OP   = 10; // max len of operator or variable name // todo rename
 
 const int NAMETABLE_CAPACITY = 10;
 
-const double EPS = 1e-7;
-
 const double EXPONENT = 2.718281828;
 const double PI       = 3.141592654;
 
@@ -168,7 +166,8 @@ TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result);
 TreeEvalRes TreeEvalBiOp (TreeNode* node, double left, double right, double* result);
 
 TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode* prev, TreeNode* left, TreeNode* right);
-int       TreeNodeDtor (TreeNode * node);
+int       TreeNodeDtor (TreeNode* node);
+int       SubtreeDtor  (TreeNode* node);
 
 Tree*       TreeCtor   ();
 TreeDtorRes TreeDtor   (Tree * tree);
@@ -180,8 +179,8 @@ Tree*            TreeCopy      (const Tree * tree);
 TreeNode*        SubtreeCopy   (TreeNode * node);
 NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src);
 
-TraverseTreeRes  TraverseTree     (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
-TraverseTreeRes  TraverseTreeFrom (Tree * tree, TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
+TraverseTreeRes  TraverseTree    (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
+TraverseTreeRes  TraverseSubtree (TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
 
 TreeNode*  SubtreeFind (TreeNode * node, double val, NodeType type);
 TreeNode*  TreeFind    (Tree * tree, double val, NodeType type);
