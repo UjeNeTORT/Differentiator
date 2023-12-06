@@ -12,8 +12,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+const double EPS = 1e-7;
 
 #define streq(s1, s2) (!strcmp ((s1), (s2)))
+#define dbleq(d1, d2) (fabs((d1) - (d2)) < EPS)
 
 // todo ask ded how to not destroy PC
 #define ABORT()                                              \
