@@ -41,6 +41,13 @@ typedef enum
 
 typedef enum
 {
+    TREE_SIMPLIFY_SUCCESS   = 0,
+    TREE_SIMPLIFY_ERR       = 1,
+    TREE_SIMLIFY_ERR_PARAMS = 2,
+} TreeSimplifyRes;
+
+typedef enum
+{
     TREE_DTOR_SUCCESS    = 0,
     TREE_DTOR_ERR_PARAMS = 1,
 } TreeDtorRes;
@@ -78,6 +85,7 @@ typedef enum
     SUBTR_TO_NUM_ERR        = 1,
     SUBTR_TO_NUM_ERR_PARAMS = 2,
 } SubtreeToNumRes;
+
 typedef enum
 {
     TRVRS_TREE_SUCCESS    = 0,
@@ -176,6 +184,13 @@ TreeEvalRes TreeEvalNums (TreeNode* node, double* result);
 TreeEvalRes TreeEval     (TreeNode * node, const NameTable * nametable, double* result);
 TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result);
 TreeEvalRes TreeEvalBiOp (TreeNode* node, double left, double right, double* result);
+
+TreeSimplifyRes TreeSimplify (Tree* tree);
+TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_canged_flag);
+TreeSimplifyRes TreeSimplifyNeutrals  (Tree* tree, int* tree_canged_flag);
+
+TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag);
+TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag);
 
 TreeNode* TreeNodeCtor (double val, NodeType type, TreeNode* prev, TreeNode* left, TreeNode* right);
 int       TreeNodeDtor (TreeNode* node);
