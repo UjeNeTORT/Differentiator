@@ -23,7 +23,7 @@ Tree* Derivative (const Tree * tree)
 
     NameTableCopy (&tree_derivative->nametable, &tree->nametable);
 
-    tree_derivative->root = TreeNodeCtor (EQUAL, UN_OP, NULL, Derivative (tree->root));
+    tree_derivative->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL, Derivative (tree->root));
 
     return tree_derivative;
 }
@@ -154,19 +154,19 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     assert(tree);
     if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
 
-    TreeSimplifyRes ret_val = TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+    TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
-    int tree_changed = 0;
+    int tree_changed_flag = 0;
 
     do
     {
-        ret_val = TreeSimplifyConstants (tree, &tree_changed);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+        ret_val = TreeSimplifyConstants (tree, &tree_changed_flag);
+        if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
 
-        ret_val = TreeSimplifyNeutrals  (tree, &tree_changed);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+        ret_val = TreeSimplifyNeutrals  (tree, &tree_changed_flag);
+        if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
 
-    } while (tree_changed == 1);
+    } while (tree_changed_flag);
 
     return ret_val;
 }
@@ -176,7 +176,7 @@ TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_changed_flag)
     assert(tree);
     if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
 
-    TreeSimplifyRes ret_val = TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
+    TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
     int local_tree_changed_flag = 0;
 
@@ -184,17 +184,20 @@ TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_changed_flag)
     {
         local_tree_changed_flag = 0;
         ret_val = SubtreeSimplifyConstants (tree->root, &local_tree_changed_flag);
-        if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) break;
+        if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
     } while (local_tree_changed_flag);
 
-    if (ret_val == TREE_SIMPLIFY_SUCCESS) *tree_changed_flag += 1;
+    if (ret_val == TREE_SIMPLIFY_SUCCESS && local_tree_changed_flag) *tree_changed_flag = 1; //? check errors
 
     return ret_val;
 }
 
 TreeSimplifyRes TreeSimplifyNeutrals (Tree* tree, int* tree_changed_flag)
 {
+    assert(tree);
+    assert(tree_changed_flag);
 
+    return SubtreeSimplifyNeutrals(tree->root, tree_changed_flag);
 }
 
 TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag)
@@ -203,16 +206,15 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
     if (!tree_changed_flag)
                RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "flag null pointer");
 
-    if (!node) return TREE_SIMPLIFY_UNTOUCHED_SUCCESS; // maybe i dont need this return code. Touched or not is accessable through the tree_changed flag
-
-    if (TYPE(node) == NUM) return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
-
-    if (TYPE(node) == VAR) return TREE_SIMPLIFY_UNTOUCHED_SUCCESS;
-
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
+
+    if (!node) return ret_val;
+    if (TYPE(node) == NUM) return ret_val;
+    if (TYPE(node) == VAR) return ret_val;
+
     if (TYPE(node) == BI_OP && TYPE(node->left) == NUM && TYPE(node->right) == NUM)
     {
-        TreeEvalNums (node, &VAL(node));
+        if (TreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
         TYPE(node) = NUM;
 
         TreeNodeDtor(node->left);
@@ -227,7 +229,7 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
     if (TYPE(node) == UN_OP && TYPE(node->right) == NUM)
     {
-        TreeEvalNums (node, &VAL(node));
+        if (TreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
         TYPE(node) = NUM;
 
         TreeNodeDtor(node->left);
@@ -238,8 +240,9 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
         return ret_val;
     }
+
     ret_val = SubtreeSimplifyConstants (node->left, tree_changed_flag);
-    if (ret_val != TREE_SIMPLIFY_SUCCESS && ret_val != TREE_SIMPLIFY_UNTOUCHED_SUCCESS) return ret_val;
+    if (ret_val != TREE_SIMPLIFY_SUCCESS) return ret_val;
     ret_val = SubtreeSimplifyConstants (node->right, tree_changed_flag);
 
     return ret_val;
@@ -247,7 +250,120 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
 TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag)
 {
+    assert(tree_changed_flag);
 
+    if (!node) return TREE_SIMPLIFY_SUCCESS;
+    if (TYPE(node) == NUM) return TREE_SIMPLIFY_SUCCESS;
+    if (TYPE(node) == VAR) return TREE_SIMPLIFY_SUCCESS;
+
+    SubtreeSimplifyNeutrals(node->left,  tree_changed_flag);
+    SubtreeSimplifyNeutrals(node->right, tree_changed_flag);
+
+    if (TYPE(node) != BI_OP)
+        return TREE_SIMPLIFY_SUCCESS; // only binary operators simplification is supported
+
+    switch ((int) VAL(node))
+    {
+    case ADD:
+        if (TYPE(node->left) == NUM && dbleq(VAL(node->left), 0))
+        {
+            VAL(node)  = VAL(node->right);
+            TYPE(node) = TYPE(node->right);
+            TreeNodeDtor(node->left); // destroy neutral number node
+
+            node->left = node->right->left;
+            TreeNode* old_right = node->right;
+            node->right = node->right->right;
+            TreeNodeDtor(old_right);
+            *tree_changed_flag = 1;
+        }
+        else if (TYPE(node->right) == NUM && dbleq(VAL(node->right), 0))
+        {
+            VAL(node)  = VAL(node->left);
+            TYPE(node) = TYPE(node->left);
+            TreeNodeDtor(node->right); // destroy neutral number node
+
+            node->right = node->left->right;
+            TreeNode* old_left = node->left;
+            node->left = node->left->left;
+            TreeNodeDtor(old_left);
+            *tree_changed_flag = 1;
+        }
+        break;
+
+    case SUB:
+        if (TYPE(node->right) == NUM && dbleq(VAL(node->right), 0))
+        {
+            VAL(node)  = VAL(node->left);
+            TYPE(node) = TYPE(node->left);
+
+            TreeNodeDtor(node->right); // destroy neutral number node
+            node->right = node->left->right;
+            TreeNode* old_left = node->left;
+            node->left = node->left->left;
+            TreeNodeDtor(old_left);
+            *tree_changed_flag = 1;
+        }
+        break;
+
+    case MUL:
+        if (TYPE(node->left) == NUM && dbleq(VAL(node->left), 1))
+        {
+            VAL(node)  = VAL(node->right);
+            TYPE(node) = TYPE(node->right);
+            TreeNodeDtor(node->left); // destroy neutral number node
+
+            node->left = node->right->left;
+            TreeNode* old_right = node->right;
+            node->right = node->right->right;
+            TreeNodeDtor(old_right);
+            *tree_changed_flag = 1;
+        }
+        else if (TYPE(node->right) == NUM && dbleq(VAL(node->right), 1))
+        {
+            VAL(node)  = VAL(node->left);
+            TYPE(node) = TYPE(node->left);
+            TreeNodeDtor(node->right); // destroy neutral number node
+
+            node->right = node->left->right;
+            TreeNode* old_left = node->left;
+            node->left = node->left->left;
+            TreeNodeDtor(old_left);
+            *tree_changed_flag = 1;
+        }
+        else if (TYPE(node->left) == NUM && dbleq(VAL(node->left), 0))
+        {
+            VAL(node)  = 0;
+            TYPE(node) = NUM;
+
+            SubtreeDtor(node->left);
+            SubtreeDtor(node->right);
+
+            node->left = NULL;
+            node->right = NULL;
+        }
+        else if (TYPE(node->right) == NUM && dbleq(VAL(node->right), 0))
+        {
+            VAL(node)  = 0;
+            TYPE(node) = NUM;
+
+            SubtreeDtor(node->left);
+            SubtreeDtor(node->right);
+
+            node->left = NULL;
+            node->right = NULL;
+        }
+        break;
+
+    case POW:
+
+        break;
+
+    default:
+        break;
+    }
+
+    return TREE_SIMPLIFY_SUCCESS;
 }
 
 Tree* DerivativeReport (const Tree* tree)
@@ -260,7 +376,7 @@ Tree* DerivativeReport (const Tree* tree)
     char tex_path[MAX_PATH] = "";
     FILE* tex_file = InitTexDump(diff_tree, tex_path);
 
-    diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL,
+    diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
                                     SubtreeDerivativeTexReport(tex_file, tree->root,
                                                                &diff_tree->nametable));
 

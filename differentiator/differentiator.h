@@ -25,28 +25,27 @@
 #define cL c(node->left)
 #define cR c(node->right)
 
-#define _NUM(num)         TreeNodeCtor(num, NUM,   NULL, NULL)
-#define _ADD(LEFT, RIGHT) TreeNodeCtor(ADD, BI_OP, LEFT, RIGHT)
-#define _SUB(LEFT, RIGHT) TreeNodeCtor(SUB, BI_OP, LEFT, RIGHT)
-#define _MUL(LEFT, RIGHT) TreeNodeCtor(MUL, BI_OP, LEFT, RIGHT)
-#define _DIV(LEFT, RIGHT) TreeNodeCtor(DIV, BI_OP, LEFT, RIGHT)
-#define _POW(LEFT, RIGHT) TreeNodeCtor(POW, BI_OP, LEFT, RIGHT)
+#define _NUM(num)         TreeNodeCtor(num, NUM,   NULL, NULL, NULL)
+#define _ADD(LEFT, RIGHT) TreeNodeCtor(ADD, BI_OP, NULL, LEFT, RIGHT)
+#define _SUB(LEFT, RIGHT) TreeNodeCtor(SUB, BI_OP, NULL, LEFT, RIGHT)
+#define _MUL(LEFT, RIGHT) TreeNodeCtor(MUL, BI_OP, NULL, LEFT, RIGHT)
+#define _DIV(LEFT, RIGHT) TreeNodeCtor(DIV, BI_OP, NULL, LEFT, RIGHT)
+#define _POW(LEFT, RIGHT) TreeNodeCtor(POW, BI_OP, NULL, LEFT, RIGHT)
 
-#define _EXP(RIGHT)       TreeNodeCtor(EXP, UN_OP, NULL, RIGHT)
-#define _LN(RIGHT)        TreeNodeCtor(LN,  UN_OP, NULL, RIGHT)
-#define _SIN(RIGHT)       TreeNodeCtor(SIN, UN_OP, NULL, RIGHT)
-#define _COS(RIGHT)       TreeNodeCtor(COS, UN_OP, NULL, RIGHT)
-#define _SH(RIGHT)        TreeNodeCtor(SH,  UN_OP, NULL, RIGHT)
-#define _CH(RIGHT)        TreeNodeCtor(CH,  UN_OP, NULL, RIGHT)
+#define _EXP(RIGHT)       TreeNodeCtor(EXP, UN_OP, NULL, NULL, RIGHT)
+#define _LN(RIGHT)        TreeNodeCtor(LN,  UN_OP, NULL, NULL, RIGHT)
+#define _SIN(RIGHT)       TreeNodeCtor(SIN, UN_OP, NULL, NULL, RIGHT)
+#define _COS(RIGHT)       TreeNodeCtor(COS, UN_OP, NULL, NULL, RIGHT)
+#define _SH(RIGHT)        TreeNodeCtor(SH,  UN_OP, NULL, NULL, RIGHT)
+#define _CH(RIGHT)        TreeNodeCtor(CH,  UN_OP, NULL, NULL, RIGHT)
 
 // ===============================================
 
 typedef enum
 {
-    TREE_SIMPLIFY_SUCCESS            = 0,
-    TREE_SIMPLIFY_UNTOUCHED_SUCCESS  = 1,
-    TREE_SIMLIFY_ERR_PARAMS          = 2,
-    TREE_SIMPLIFY_ERR                = 3,
+    TREE_SIMPLIFY_SUCCESS   = 0,
+    TREE_SIMPLIFY_ERR       = 1,
+    TREE_SIMLIFY_ERR_PARAMS = 2,
 } TreeSimplifyRes;
 
 Tree*     Derivative (const Tree * tree);
