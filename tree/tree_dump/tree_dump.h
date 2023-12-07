@@ -35,6 +35,12 @@ const char GRAPH_ERRCLR[]  = "#000000";
 
 typedef enum
 {
+    SIMPLE_DUMP   = 0,
+    DETAILED_DUMP = 1,
+} DotDumpType;
+
+typedef enum
+{
     TEX_PRINT_SUCCESS = 0,
     TEX_PRINT_ERR     = 1,
 } TexTreePrintRes;
@@ -47,29 +53,31 @@ typedef enum
 
 typedef enum
 {
-    DOT_PRINT_SUCCESS = 0,
-    DOT_PRINT_ERR     = 1,
+    DOT_PRINT_SUCCESS    = 0,
+    DOT_PRINT_ERR        = 1,
+    DOT_PRINT_ERR_PARAMS = 2,
 } DotTreePrintRes;
+
 
 int   TreeTexDump     (const Tree* tree);
 FILE* InitTexDump     (const Tree* tree, char * tex_path);
 int   CompileLatex    (const char* tex_path);
-int   ConcludeTexDump (FILE* tex_file, char * tex_path);
-
-// todo
-int TreeDotDump (const char * fname, const Tree * tree);
-int CompileDot  (char* dot_fname, char* detailed_dot_fname, int dump_id);
-int WriteHTML   (const char * HTML_fname, int dump_id);
+int   ConcludeTexDump (FILE* tex_file);
 
 TexTreePrintRes    TexTreePrint    (FILE* tex_file, const Tree * tree);
-TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const NameTable nametable);
+TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const Tree* tree);
 
-DotTreePrintRes DotTreePrint (const char* dot_fname, const Tree* tree);
+int   TreeDotDump     (const char * fname, const Tree * tree);
+FILE* InitDotDump     (const Tree* tree, char* dot_path, DotDumpType dump_type);
+int   CompileDot      (char* dot_path, int dump_id, DotDumpType dump_type);
+int   WriteHTML       (const char * HTML_fname, int dump_id);
+int   ConcludeDotDump (FILE* tex_file);
 
-int DotSubtreePrint (FILE * stream, const TreeNode * node, NameTable nametable);
+DotTreePrintRes DotTreePrint    (FILE* dot_file, const Tree * tree);
+DotTreePrintRes DotSubtreePrint (FILE* dot_file, const TreeNode* node, const Tree* tree, int* node_id);
 
-int DotTreeDetailedPrint    (const char * dot_fname, const Tree * tree);
-int DotSubtreeDetailedPrint (FILE * stream, const TreeNode * node, NameTable nametable);
+DotTreePrintRes DotTreeDetailedPrint    (FILE* dot_file, const Tree * tree);
+DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, const Tree* tree, int* node_id);
 
 char * GetFilePath (const char * path, const char * fname);
 

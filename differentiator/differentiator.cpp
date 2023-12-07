@@ -139,11 +139,11 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
     {
         fprintf(tex_file, "%s\n", MATAN_PHRASES[rand() % MATAN_PHRASES_COUNT]);
         fprintf(tex_file, "$$  (");
-        TexSubtreePrint(tex_file, NULL, node, tree->nametable);
+        TexSubtreePrint(tex_file, NULL, node, tree);
         fprintf(tex_file, ")\' = $$\n");
 
         fprintf(tex_file, "$$  ");
-        TexSubtreePrint(tex_file, node, d_node, tree->nametable);
+        TexSubtreePrint(tex_file, node, d_node, tree);
         fprintf(tex_file, "  $$\n");
     }
 
@@ -163,7 +163,7 @@ Tree* DerivativeReport (const Tree* tree)
     diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
                                     SubtreeDerivativeTexReport(tex_file, tree->root, diff_tree));
 
-    ConcludeTexDump(tex_file, tex_path);
+    ConcludeTexDump(tex_file);
 
     CompileLatex(tex_path);
 
