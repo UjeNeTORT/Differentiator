@@ -180,10 +180,11 @@ struct Tree
 
 typedef int (* NodeAction_t) (TreeNode * node);
 
-TreeEvalRes TreeEvalNums (TreeNode* node, double* result);
-TreeEvalRes TreeEval     (TreeNode * node, const NameTable * nametable, double* result);
-TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result);
-TreeEvalRes TreeEvalBiOp (TreeNode* node, double left, double right, double* result);
+TreeEvalRes TreeEval        (Tree* tree, double* result);
+TreeEvalRes SubtreeEval     (TreeNode* node, const Tree* tree, double* result);
+TreeEvalRes SubtreeEvalNums (TreeNode* node, double* result);
+TreeEvalRes SubtreeEvalUnOp (TreeNode* node, double right, double* result);
+TreeEvalRes SubtreeEvalBiOp (TreeNode* node, double left, double right, double* result);
 
 TreeSimplifyRes TreeSimplify (Tree* tree);
 TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_canged_flag);

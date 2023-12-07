@@ -19,48 +19,25 @@
 
 // ============================================================================================
 
-TreeEvalRes TreeEvalNums (TreeNode* node, double* result)
+TreeEvalRes TreeEval (Tree* tree, double* result)
 {
-    if (!node) return TREE_EVAL_SUCCESS;
+    assert(tree);
+    assert(result);
+    if (!tree)   RET_ERROR(TREE_EVAL_ERR_PARAMS, "Tree null pointer");
+    if (!result) RET_ERROR(TREE_EVAL_ERR_PARAMS, "Result null pointer");
 
-    double left  = 0;
-    double right = 0;
-
-    TreeEvalRes ret_val = TREE_EVAL_SUCCESS;
-
-    switch (TYPE(node))
-    {
-
-    case NUM:
-        *result = VAL(node);
-        break;
-
-    case UN_OP:
-        if (TreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
-            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-
-        ret_val = TreeEvalUnOp(node, right, result);
-        break;
-
-    case BI_OP:
-        if (TreeEvalNums(node->left, &left) != TREE_EVAL_SUCCESS)
-            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-
-        if (TreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
-            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-
-        ret_val = TreeEvalBiOp(node, left, right, result);
-        break;
-
-    default:
-        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed (received node type = %d)", TYPE(node));
-    }
-
-    return ret_val;
+    return SubtreeEval (tree->root, tree, result);
 }
 
-TreeEvalRes TreeEval (TreeNode * node, const NameTable * nametable, double* result)
+// ============================================================================================
+
+TreeEvalRes SubtreeEval (TreeNode* node, const Tree* tree, double* result)
 {
+    assert(tree);
+    assert(result);
+    if (!tree)   RET_ERROR(TREE_EVAL_ERR_PARAMS, "Tree null pointer");
+    if (!result) RET_ERROR(TREE_EVAL_ERR_PARAMS, "Result null pointer");
+
     if (!node) return TREE_EVAL_SUCCESS;
 
     double left  = 0;
@@ -76,27 +53,27 @@ TreeEvalRes TreeEval (TreeNode * node, const NameTable * nametable, double* resu
         break;
 
     case VAR:
-        *result = nametable->vals[(int) VAL(node)];
+        *result = tree->nametable.vals[(int) VAL(node)];
         break;
 
     case UN_OP:
-        if (TreeEval(node->right, nametable, &right) != TREE_EVAL_SUCCESS)
+        if (SubtreeEval(node->right, tree, &right) != TREE_EVAL_SUCCESS)
             RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        ret_val = TreeEvalUnOp(node, right, result);
+        ret_val = SubtreeEvalUnOp(node, right, result);
         break;
 
     case BI_OP:
-        ret_val = TreeEval (node->left, nametable, &left);
+        ret_val = SubtreeEval (node->left, tree, &left);
         if (ret_val != TREE_EVAL_SUCCESS) RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-        ret_val = TreeEval (node->right, nametable, &right);
+        ret_val = SubtreeEval (node->right, tree, &right);
         if (ret_val != TREE_EVAL_SUCCESS) RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
 
-        ret_val = TreeEvalBiOp (node, left, right, result);
+        ret_val = SubtreeEvalBiOp (node, left, right, result);
         break;
 
     default:
-        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed");
+        RET_ERROR(TREE_EVAL_FORBIDDEN, "Unknown node type %d", TYPE(node));
     }
 
     return ret_val;
@@ -104,7 +81,49 @@ TreeEvalRes TreeEval (TreeNode * node, const NameTable * nametable, double* resu
 
 // ============================================================================================
 
-TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result)
+TreeEvalRes SubtreeEvalNums (TreeNode * node, double* result)
+{
+    if (!node) return TREE_EVAL_SUCCESS;
+
+    double left  = 0;
+    double right = 0;
+
+    TreeEvalRes ret_val = TREE_EVAL_SUCCESS;
+
+    switch (TYPE(node))
+    {
+
+    case NUM:
+        *result = VAL(node);
+        break;
+
+    case UN_OP:
+        if (SubtreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
+
+        ret_val = SubtreeEvalUnOp(node, right, result);
+        break;
+
+    case BI_OP:
+        if (SubtreeEvalNums(node->left, &left) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
+
+        if (SubtreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
+            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
+
+        ret_val = SubtreeEvalBiOp(node, left, right, result);
+        break;
+
+    default:
+        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed (received node type = %d)", TYPE(node));
+    }
+
+    return ret_val;
+}
+
+// ============================================================================================
+
+TreeEvalRes SubtreeEvalUnOp (TreeNode* node, double right, double* result)
 {
     assert(result);
     if (!result) return TREE_EVAL_ERR_PARAMS;
@@ -183,7 +202,7 @@ TreeEvalRes TreeEvalUnOp (TreeNode* node, double right, double* result)
 
 // ============================================================================================
 
-TreeEvalRes TreeEvalBiOp (TreeNode* node, double left, double right, double* result)
+TreeEvalRes SubtreeEvalBiOp (TreeNode* node, double left, double right, double* result)
 {
     assert(result);
     if (!result) return TREE_EVAL_ERR_PARAMS;
@@ -322,7 +341,7 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
     if (TYPE(node) == BI_OP && TYPE(node->left) == NUM && TYPE(node->right) == NUM)
     {
-        if (TreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
+        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
         TYPE(node) = NUM;
 
         TreeNodeDtor(node->left);
@@ -337,7 +356,7 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
     if (TYPE(node) == UN_OP && TYPE(node->right) == NUM)
     {
-        if (TreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
+        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
         TYPE(node) = NUM;
 
         TreeNodeDtor(node->left);
