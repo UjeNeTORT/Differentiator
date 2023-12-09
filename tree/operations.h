@@ -31,23 +31,24 @@ typedef enum
 typedef enum
 {
     ERR   = 0,
-    NUM   = 1, // number
-    VAR   = 2, // variable
-    BI_OP = 3, // binary operator
-    UN_OP = 4, // unary operator
+    ROOT  = 1,
+    NUM   = 2, // number
+    VAR   = 3, // variable
+    BI_OP = 4, // binary operator
+    UN_OP = 5, // unary operator
 } NodeType;
 
 struct Operation
 {
     Opcodes      opcode;
-    const char * name;
+    const char*  name;
     NodeType     type; // binary or unary
     int          priority;
 };
 
-const Operation OPERATIONS[] = // codestyle?
+const Operation OPERATIONS[] =
 {
-    {EQUAL, "=",      UN_OP, 0},
+    {EQUAL, "=",      ROOT , 0}, // not an operation technically
     {ADD,   "+",      BI_OP, 1},
     {SUB,   "-",      BI_OP, 1},
     {MUL,   "*",      BI_OP, 2},
@@ -67,7 +68,6 @@ const Operation OPERATIONS[] = // codestyle?
     {CH,    "ch",     UN_OP, 4},
     {TH,    "th",     UN_OP, 4},
     {CTH,   "cth",    UN_OP, 4},
-    // {LOG,   "log",    BI_OP, 4},
 };
 
 const int OPERATIONS_NUM = sizeof(OPERATIONS) / sizeof(Operation);
