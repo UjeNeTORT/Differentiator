@@ -12,12 +12,12 @@
 
 #include <stdio.h>
 
+#include "../colors.h"
 #include "../tools/tools.h"
 #include "operations.h"
-#include "../colors.h"
 
-const int MAX_TREE = 5000;
-const int MAX_OP   = 10; // max len of operator or variable name // todo rename
+const int MAX_TREE = 5000; // max len of a string-written tree in a file
+const int MAX_OP   = 10;   // max len of an operator or variable name
 
 const int NAMETABLE_CAPACITY = 10;
 
@@ -26,9 +26,10 @@ const double PI       = 3.141592654;
 
 // ===================== DSL =====================
 
-#define TYPE(node) node->data.type
-#define VAL(node)  node->data.val
+#define TYPE(node) (node)->data.type
+#define VAL(node)  (node)->data.val
 
+#define CHECK_VAL(node, val) (TYPE(node) == NUM && dbleq(VAL(node), 0))
 // ===============================================
 
 typedef enum
@@ -107,8 +108,7 @@ typedef enum
 
 typedef enum
 {
-    LEFT    = -1,
-    REPLACE = 0,
+    LEFT    = 0,
     RIGHT   = 1,
 } NodeLocation;
 
@@ -155,10 +155,10 @@ typedef enum
 
 struct NameTable
 {
-    char * names    [NAMETABLE_CAPACITY];
-    double vals     [NAMETABLE_CAPACITY];
-    int    dx_id; // determeines with respect to which variable we differentiate
-    int    free;
+    char*  names [NAMETABLE_CAPACITY];
+    double vals  [NAMETABLE_CAPACITY];
+    int dx_id; // determeines with respect to which variable we differentiate
+    int free;
 };
 
 struct NodeData
@@ -181,22 +181,21 @@ struct Tree
 {
     TreeNode*  root;
     NameTable* nametable;
-
-    int size;
 };
 
-typedef int (* NodeAction_t) (TreeNode * node);
+typedef long long TreeErrorVector;
+typedef int (* NodeAction_t) (TreeNode* node);
 
-TreeEvalRes TreeEval        (Tree* tree, double* result);
-TreeEvalRes SubtreeEval     (TreeNode* node, const Tree* tree, double* result);
-TreeEvalRes SubtreeEvalNums (TreeNode* node, double* result);
-TreeEvalRes SubtreeEvalUnOp (TreeNode* node, double right, double* result);
-TreeEvalRes SubtreeEvalBiOp (TreeNode* node, double left, double right, double* result);
+TreeErrorVector TreeVerify    (const Tree* tree);
+TreeErrorVector SubtreeVerify (const TreeNode* node);
+
+TreeEvalRes TreeEval        (const Tree* tree, double* result);
+TreeEvalRes SubtreeEval     (const TreeNode* node, const Tree* tree, double* result);
+TreeEvalRes SubtreeEvalNums (const TreeNode* node, double* result);
+TreeEvalRes SubtreeEvalUnOp (const TreeNode* node, double right, double* result);
+TreeEvalRes SubtreeEvalBiOp (const TreeNode* node, double left, double right, double* result);
 
 TreeSimplifyRes TreeSimplify (Tree* tree);
-TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_canged_flag);
-TreeSimplifyRes TreeSimplifyNeutrals  (Tree* tree, int* tree_canged_flag);
-
 TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag);
 TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag);
 
@@ -205,51 +204,47 @@ int       TreeNodeDtor (TreeNode* node);
 int       SubtreeDtor  (TreeNode* node);
 
 Tree*       TreeCtor   ();
-TreeDtorRes TreeDtor   (Tree * tree);
+TreeDtorRes TreeDtor   (Tree* tree);
 
 NameTable*       NameTableCtor ();
 NameTableDtorRes NameTableDtor (NameTable* nametable);
 
-Tree*            TreeCopyOf    (const Tree * tree);
-TreeNode*        SubtreeCopyOf (TreeNode * node);
-NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src);
+Tree*            TreeCopyOf    (const Tree* tree);
+TreeNode*        SubtreeCopyOf (const TreeNode* node);
+NameTableCopyRes NameTableCopy (NameTable* dst, const NameTable* src);
 
 LiftChildToParentRes LiftChildToParent (TreeNode* node, NodeLocation child_location);
 SubtreeToNumRes      SubtreeToNum      (TreeNode* node, double val);
 
-TraverseTreeRes  TraverseTree    (Tree * tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
-TraverseTreeRes  TraverseSubtree (TreeNode * node, NodeAction_t NodeAction, TraverseOrder traverse_order);
+TraverseTreeRes  TraverseTree    (const Tree* tree, NodeAction_t NodeAction, TraverseOrder traverse_order);
+TraverseTreeRes  TraverseSubtree (TreeNode* node, NodeAction_t NodeAction, TraverseOrder traverse_order);
 
-TreeNode*  SubtreeFind (TreeNode * node, double val, NodeType type);
-TreeNode*  TreeFind    (Tree * tree, double val, NodeType type);
+Tree*      ReadTree     (FILE* stream);
+Tree*      ReadTree     (const char* infix_tree);
+TreeNode*  ReadSubtree  (const char* infix_tree, const Tree* tree, int* offset);
+NodeData   ReadNodeData (const char* infix_tree, const Tree* tree, int* offset);
 
-Tree*      ReadTree     (FILE * stream);
-Tree*      ReadTree     (const char * infix_tree);
-TreeNode*  ReadSubtree  (const char * infix_tree, const Tree* tree, int * offset);
-NodeData   ReadNodeData (const char * infix_tree, const Tree* tree, int * offset);
-
-WriteTreeRes WriteSubtree  (FILE * stream, const TreeNode * node, const Tree* tree);
-WriteTreeRes WriteTree     (FILE * stream, const Tree * tree);
-WriteTreeRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
-
-int FindVarInNametable (const NameTable * nametable, const char * word);
-SpecifyDxRes SpesifyDx (NameTable* nametable);
-int IncorrectVarName   (const char * word);
-
-ReadAssignVariableRes ReadAssignVariable (NodeData* data, char* word, const Tree* tree);
-ReadAssignOperatorRes ReadAssignOperator (NodeData* data, char* word);
 ReadAssignDoubleRes   ReadAssignDouble   (NodeData* data, char* word);
+ReadAssignOperatorRes ReadAssignOperator (NodeData* data, char* word);
+ReadAssignVariableRes ReadAssignVariable (NodeData* data, char* word, const Tree* tree);
 
-int ScanVariableVal (NameTable * nametable, int var_id);
+int ScanVariableVal (NameTable* nametable, int var_id);
+
+WriteTreeRes WriteTree     (FILE* stream, const Tree* tree);
+WriteTreeRes WriteSubtree  (FILE* stream, const TreeNode* node, const Tree* tree);
+WriteTreeRes WriteNodeData (FILE* stream, NodeData data, const NameTable* nametable);
+
+int          FindVarInNametable (const NameTable* nametable, const char* word);
+SpecifyDxRes SpecifyDx          (NameTable* nametable);
+int          UpdNameTable       (NameTable* nametable, char* word);
+int          IsVarNameCorrect   (const char* word);
 
 int FindOperation (int opcode);
 
-int UpdNameTable (NameTable * nametable, char * word);
+int SubtreeHasVars (const TreeNode* node, const NameTable* nametable);
 
-int IsDouble (char * word); // ! WARNING cructh function
+int IsDouble (char* word); // ! WARNING cructh function
 
-int IsZero (double num);
-
-SkipSpacesRes SkipSpaces (const char * string, int* offset);
+SkipSpacesRes SkipSpaces (const char* string, int* offset);
 
 #endif // TREE_H
