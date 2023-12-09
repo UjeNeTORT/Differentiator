@@ -151,11 +151,11 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
         break;
     }
 
-    int dummy = 0;
-    if (SubtreeSimplifyConstants(d_node, &dummy) != TREE_SIMPLIFY_SUCCESS)
+    int dummy_tree_changed_flag = 0;
+    if (SubtreeSimplifyConstants(d_node, &dummy_tree_changed_flag) != TREE_SIMPLIFY_SUCCESS)
         RET_ERROR(NULL, "Tree constants simplification error. Tree corrupted.");
 
-    if (SubtreeSimplifyNeutrals (d_node, &dummy))
+    if (SubtreeSimplifyNeutrals (d_node, &dummy_tree_changed_flag) != TREE_SIMPLIFY_SUCCESS)
         RET_ERROR(NULL, "Tree neutrals simplification error. Tree corrupted.");
 
     if (tex_file && (int) VAL(node) != EQUAL)
