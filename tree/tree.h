@@ -149,8 +149,9 @@ typedef enum
 
 struct NameTable
 {
-    char * names [NAMETABLE_CAPACITY];
-    double vals  [NAMETABLE_CAPACITY];
+    char * names    [NAMETABLE_CAPACITY];
+    double vals     [NAMETABLE_CAPACITY];
+    int    dx_id; // determeines with respect to which variable we differentiate
     int    free;
 };
 
@@ -172,8 +173,8 @@ struct TreeNode
 
 struct Tree
 {
-    TreeNode* root;
-    NameTable nametable;
+    TreeNode*  root;
+    NameTable* nametable;
 
     int size;
 };
@@ -200,11 +201,11 @@ int       SubtreeDtor  (TreeNode* node);
 Tree*       TreeCtor   ();
 TreeDtorRes TreeDtor   (Tree * tree);
 
-NameTableCtorRes NameTableCtor (NameTable* nametable);
+NameTable*       NameTableCtor ();
 NameTableDtorRes NameTableDtor (NameTable* nametable);
 
-Tree*            TreeCopy      (const Tree * tree);
-TreeNode*        SubtreeCopy   (TreeNode * node);
+Tree*            TreeCopyOf    (const Tree * tree);
+TreeNode*        SubtreeCopyOf (TreeNode * node);
 NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src);
 
 LiftChildToParentRes LiftChildToParent (TreeNode* node, NodeLocation child_location);
@@ -218,25 +219,26 @@ TreeNode*  TreeFind    (Tree * tree, double val, NodeType type);
 
 Tree*      ReadTree     (FILE * stream);
 Tree*      ReadTree     (const char * infix_tree);
-TreeNode*  ReadSubtree  (const char * infix_tree, NameTable * nametable, int * offset);
-NodeData   ReadNodeData (const char * infix_tree, NameTable * nametable, int * offset);
+TreeNode*  ReadSubtree  (const char * infix_tree, const Tree* tree, int * offset);
+NodeData   ReadNodeData (const char * infix_tree, const Tree* tree, int * offset);
 
-WriteTreeRes WriteSubtree  (FILE * stream, const TreeNode * node, const NameTable * nametable);
+WriteTreeRes WriteSubtree  (FILE * stream, const TreeNode * node, const Tree* tree);
 WriteTreeRes WriteTree     (FILE * stream, const Tree * tree);
 WriteTreeRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
-int UpdNameTable     (NameTable * nametable, char * word);
-int IncorrectVarName (const char * word);
+int FindNametableDupId (const NameTable * nametable, const char * word);
+int IsGradientMember   (const char* var_name); // GRADIENT? naming!!
+int IncorrectVarName   (const char * word);
 
-ReadAssignVariableRes ReadAssignVariable (NodeData * data, char * word, NameTable * nametable);
-ReadAssignOperatorRes ReadAssignOperator (NodeData * data, char * word);
-ReadAssignDoubleRes   ReadAssignDouble   (NodeData * data, char * word);
+ReadAssignVariableRes ReadAssignVariable (NodeData* data, char* word, const Tree* tree);
+ReadAssignOperatorRes ReadAssignOperator (NodeData* data, char* word);
+ReadAssignDoubleRes   ReadAssignDouble   (NodeData* data, char* word);
 
 int ScanVariableVal (NameTable * nametable, int var_id);
 
 int FindOperation (int opcode);
 
-int FindNametableDups(NameTable * nametable, const char * word);
+int UpdNameTable (NameTable * nametable, char * word);
 
 int IsDouble (char * word); // ! WARNING cructh function
 

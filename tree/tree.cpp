@@ -47,13 +47,12 @@ TreeEvalRes SubtreeEval (TreeNode* node, const Tree* tree, double* result)
 
     switch (TYPE(node))
     {
-
     case NUM:
         *result = VAL(node);
         break;
 
     case VAR:
-        *result = tree->nametable.vals[(int) VAL(node)];
+        *result = tree->nametable->vals[(int) VAL(node)];
         break;
 
     case UN_OP:
@@ -83,6 +82,8 @@ TreeEvalRes SubtreeEval (TreeNode* node, const Tree* tree, double* result)
 
 TreeEvalRes SubtreeEvalNums (TreeNode * node, double* result)
 {
+    assert(result);
+
     if (!node) return TREE_EVAL_SUCCESS;
 
     double left  = 0;
@@ -246,6 +247,8 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     assert(tree);
     if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
 
+    PRINTF_DEBUG("tree received:\n");
+    WriteTree(stdout, tree);
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
     int tree_changed_flag = 0;
@@ -253,13 +256,11 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     do
     {
         tree_changed_flag = 0;
-
         ret_val = TreeSimplifyConstants (tree, &tree_changed_flag);
         if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
 
         ret_val = TreeSimplifyNeutrals  (tree, &tree_changed_flag);
         if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
-
     } while (tree_changed_flag);
 
     return ret_val;
@@ -283,10 +284,11 @@ TreeSimplifyRes TreeSimplifyConstants (Tree* tree, int* tree_changed_flag)
         local_tree_changed_flag = 0;
         ret_val = SubtreeSimplifyConstants (tree->root, &local_tree_changed_flag);
 
+        if (local_tree_changed_flag) *tree_changed_flag = 1;
+
         if (ret_val != TREE_SIMPLIFY_SUCCESS) return ret_val;
     } while (local_tree_changed_flag);
 
-    if (local_tree_changed_flag) *tree_changed_flag = 1;
 
     return ret_val;
 }
@@ -329,6 +331,31 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
     if (TYPE(node) == NUM) return TREE_SIMPLIFY_SUCCESS;
     if (TYPE(node) == VAR) return TREE_SIMPLIFY_SUCCESS;
 
+    if (TYPE(node) == UN_OP && (int) VAL(node) != EQUAL && TYPE(node->right) == NUM)
+    {
+        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
+        TYPE(node) = NUM;
+
+        *tree_changed_flag = 1;
+
+        return TREE_SIMPLIFY_SUCCESS;
+    }
+
+    if (TYPE(node) == BI_OP && TYPE(node->left) == NUM && TYPE(node->right) == NUM)
+    {
+        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
+        TYPE(node) = NUM;
+
+        TreeNodeDtor (node->left);
+        TreeNodeDtor (node->right);
+        node->left  = NULL;
+        node->right = NULL;
+
+        *tree_changed_flag = 1;
+
+        return TREE_SIMPLIFY_SUCCESS;
+    }
+
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
     ret_val = SubtreeSimplifyConstants (node->left, tree_changed_flag);
@@ -339,36 +366,7 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
     if (ret_val != TREE_SIMPLIFY_SUCCESS)
         RET_ERROR (TREE_SIMPLIFY_ERR, "Previous function returned error code %d", ret_val);
 
-    if (TYPE(node) == BI_OP && TYPE(node->left) == NUM && TYPE(node->right) == NUM)
-    {
-        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
-        TYPE(node) = NUM;
-
-        TreeNodeDtor(node->left);
-        TreeNodeDtor(node->right);
-        node->left  = NULL;
-        node->right = NULL;
-
-        *tree_changed_flag = 1;
-
-        return ret_val;
-    }
-
-    if (TYPE(node) == UN_OP && TYPE(node->right) == NUM)
-    {
-        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
-        TYPE(node) = NUM;
-
-        TreeNodeDtor(node->left);
-
-        node->left = NULL;
-
-        *tree_changed_flag = 1;
-
-        return ret_val;
-    }
-
-    return ret_val;
+    return TREE_SIMPLIFY_SUCCESS;
 }
 
 // ============================================================================================
@@ -447,6 +445,15 @@ TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag
         }
         break;
 
+    case DIV:
+        if (TYPE(node->left) == NUM && dbleq(VAL(node->left), 0))
+        {
+            SubtreeToNum(node, 0);
+
+            *tree_changed_flag = 1;
+        }
+        break;
+
     case POW:
         if (TYPE(node->right) == NUM && dbleq(VAL(node->right), 1))
         {
@@ -509,7 +516,7 @@ Tree* TreeCtor ()
 {
     Tree* tree = (Tree*) calloc (1, sizeof (Tree));
 
-    NameTableCtor(&tree->nametable);
+    tree->nametable = NameTableCtor();
 
     return tree;
 }
@@ -524,7 +531,7 @@ TreeDtorRes TreeDtor (Tree * tree)
     // traverse the tree and free each node
     TraverseTree(tree, TreeNodeDtor, POSTORDER);
 
-    NameTableDtor(&tree->nametable);
+    NameTableDtor(tree->nametable);
 
     free(tree);
 
@@ -533,17 +540,22 @@ TreeDtorRes TreeDtor (Tree * tree)
 
 // ============================================================================================
 
-NameTableCtorRes NameTableCtor (NameTable* nametable)
+NameTable* NameTableCtor ()
 {
-    assert(nametable);
-    if (!nametable) RET_ERROR(NAMETABLE_CTOR_ERR_PARAMS, "Nametable null pointer");
+    NameTable* nametable = (NameTable*) calloc(1, sizeof(NameTable));
+    if (!nametable) RET_ERROR(NULL, "nametable allocation error");
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
-        nametable->names[i] = (char *) calloc(MAX_OP, sizeof(char));
+    {
+        nametable->names[i]    = (char *) calloc(MAX_OP, sizeof(char));
 
-    nametable->free = 0;
+        if (!nametable->names[i]) RET_ERROR(NULL, "names[%d] allocation error", i);
+    }
 
-    return NAMETABLE_CTOR_SUCCESS;
+    nametable->dx_id = -1;
+    nametable->free  = 0;
+
+    return nametable;
 }
 
 // ============================================================================================
@@ -556,23 +568,22 @@ NameTableDtorRes NameTableDtor (NameTable* nametable)
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
         free(nametable->names[i]);
 
-    nametable->free = 0;
-
+    free(nametable);
 
     return NAMETABLE_DTOR_SUCCESS;
 }
 
 // ============================================================================================
 
-Tree* TreeCopy (const Tree * tree)
+Tree* TreeCopyOf (const Tree * tree)
 {
     assert (tree);
     if (!tree) RET_ERROR (NULL, "Tree null pointer");
 
     Tree* copied = TreeCtor ();
-    copied->root = SubtreeCopy (tree->root);
+    copied->root = SubtreeCopyOf (tree->root);
 
-    NameTableCopy (&copied->nametable, &tree->nametable);
+    NameTableCopy (copied->nametable, tree->nametable);
 
     copied->size = tree->size;
 
@@ -581,12 +592,12 @@ Tree* TreeCopy (const Tree * tree)
 
 // ============================================================================================
 
-TreeNode * SubtreeCopy (TreeNode * node)
+TreeNode * SubtreeCopyOf (TreeNode * node)
 {
     if (!node) return NULL;
 
     TreeNode * copied = TreeNodeCtor(node->data.val, node->data.type, node->prev,
-                                        SubtreeCopy(node->left), SubtreeCopy(node->right));
+                                        SubtreeCopyOf(node->left), SubtreeCopyOf(node->right));
 
     return copied;
 }
@@ -602,9 +613,12 @@ NameTableCopyRes NameTableCopy (NameTable * dst, const NameTable * src)
 
     for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
+        free(dst->names[i]); // memory allocated in ctor
         dst->names[i] = strdup(src->names[i]);
         dst->vals[i]  = src->vals[i];
     }
+
+    dst->dx_id = src->dx_id;
     dst->free = src->free;
 
     return NAMETABLE_COPY_SUCCESS;
@@ -748,8 +762,8 @@ TreeNode * TreeFind (Tree * tree, double val, NodeType type)
 }
 
 // ============================================================================================
-
-TreeNode* ReadSubtree (const char * infix_tree, NameTable * nametable, int * offset)
+// todo refactor ret error
+TreeNode* ReadSubtree (const char * infix_tree, const Tree* tree, int * offset)
 {
     assert(infix_tree);
 
@@ -773,12 +787,12 @@ TreeNode* ReadSubtree (const char * infix_tree, NameTable * nametable, int * off
 
     *offset += 1; // skip (
 
-    node->left = ReadSubtree(infix_tree, nametable, offset);
+    node->left = ReadSubtree (infix_tree, tree, offset);
     if (node->left) node->left->prev = node;
 
-    node->data = ReadNodeData(infix_tree, nametable, offset);
+    node->data = ReadNodeData (infix_tree, tree, offset);
 
-    node->right = ReadSubtree(infix_tree, nametable, offset);
+    node->right = ReadSubtree (infix_tree, tree, offset);
     if (node->right) node->right->prev = node;
 
     while(infix_tree[*offset] != ')')
@@ -801,7 +815,7 @@ Tree* ReadTree (const char * infix_tree)
 
     Tree* tree = TreeCtor();
 
-    tree->root = ReadSubtree(infix_tree, &tree->nametable, &offset);
+    tree->root = ReadSubtree(infix_tree, tree, &offset);
 
     return tree;
 }
@@ -826,10 +840,10 @@ Tree* ReadTree (FILE * stream)
 
 // ============================================================================================
 
-NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offset)
+NodeData ReadNodeData(const char * infix_tree, const Tree* tree, int * offset)
 {
     assert(infix_tree);
-    assert(nametable);
+    assert(tree);
     assert(offset);
 
     NodeData data = {ERR, 0};
@@ -844,27 +858,21 @@ NodeData ReadNodeData(const char * infix_tree, NameTable * nametable, int * offs
 
     *offset += addition;
 
-    if (ReadAssignDouble(&data, word) == READ_ASSIGN_DBL_SUCCESS)
-    {
+    if (ReadAssignDouble (&data, word) == READ_ASSIGN_DBL_SUCCESS)
         return data;
-    }
 
-    if (ReadAssignOperator(&data, word) == READ_ASSIGN_OP_SUCCESS)
-    {
+    if (ReadAssignOperator (&data, word) == READ_ASSIGN_OP_SUCCESS)
         return data;
-    }
 
-    if (ReadAssignVariable(&data, word, nametable) == READ_ASSIGN_VAR_SUCCESS)
-    {
+    if (ReadAssignVariable (&data, word, tree) == READ_ASSIGN_VAR_SUCCESS)
         return data;
-    }
 
-    return data; // error NodeType
+    return data; // error NodeType on default
 }
 
 // ============================================================================================
 
-WriteTreeRes WriteSubtree(FILE * stream, const TreeNode * node, const NameTable * nametable)
+WriteTreeRes WriteSubtree(FILE * stream, const TreeNode * node, const Tree* tree)
 {
     assert(stream);
     if (!stream) RET_ERROR(WRT_TREE_ERR_PARAMS, "Stream null pointer");
@@ -878,9 +886,9 @@ WriteTreeRes WriteSubtree(FILE * stream, const TreeNode * node, const NameTable 
 
     fprintf(stream, "( ");
 
-    WriteSubtree(stream, node->left, nametable);
-    WriteTreeRes ret_val = WriteNodeData(stream, node->data, nametable);
-    WriteSubtree(stream, node->right, nametable);
+    WriteSubtree(stream, node->left, tree);
+    WriteTreeRes ret_val = WriteNodeData(stream, node->data, tree->nametable);
+    WriteSubtree(stream, node->right, tree);
 
     fprintf(stream, ") ");
 
@@ -896,7 +904,7 @@ WriteTreeRes WriteTree(FILE * stream, const Tree * tree)
     if (!stream) RET_ERROR(WRT_TREE_ERR_PARAMS, "Stream null pointer");
     if (!tree)   RET_ERROR(WRT_TREE_ERR_PARAMS, "Tree null pointer");
 
-    WriteTreeRes ret_val = WriteSubtree(stream, tree->root, (const NameTable *) &tree->nametable);
+    WriteTreeRes ret_val = WriteSubtree(stream, tree->root, tree);
 
     fprintf(stream, "\n");
 
@@ -939,7 +947,7 @@ WriteTreeRes WriteNodeData (FILE * stream, NodeData data, const NameTable * name
 
 // ============================================================================================
 
-int UpdNameTable(NameTable * nametable, char * word)
+int UpdNameTable (NameTable * nametable, char * word)
 {
     assert(nametable);
     assert(word);
@@ -972,23 +980,44 @@ int IncorrectVarName (const char * word)
 
 // ============================================================================================
 
-ReadAssignVariableRes ReadAssignVariable (NodeData * data, char * word, NameTable * nametable)
+int IsGradientMember (const char* var_name)
+{
+    assert(var_name);
+
+    char* answer = (char *) calloc(USER_ANSW_SIZE, sizeof(char));
+    fprintf (stdout, "Do we differentiate with respect to %s [y|n]?\n>> ", var_name);
+    fscanf  (stdin, "%s", answer);
+
+    int ret_val = streq(answer, "y");
+
+    free(answer);
+
+    return ret_val;
+}
+
+// ============================================================================================
+
+ReadAssignVariableRes ReadAssignVariable (NodeData* data, char * var_name, const Tree* tree)
 {
     assert(data);
-    assert(word);
+    assert(var_name);
 
     if (!data) RET_ERROR(READ_ASSIGN_VAR_ERR_PARAMS, "data null pointer");
-    if (!word) RET_ERROR(READ_ASSIGN_VAR_ERR_PARAMS, "word null pointer");
-    if (IncorrectVarName((const char *) word))
-        RET_ERROR(READ_ASSIGN_VAR_ERR, "Incorrect variable name \"%s\"\n", word);
+    if (!var_name) RET_ERROR(READ_ASSIGN_VAR_ERR_PARAMS, "var_name null pointer");
+    if (IncorrectVarName((const char *) var_name))
+        RET_ERROR(READ_ASSIGN_VAR_ERR, "Incorrect variable name \"%s\"\n", var_name);
 
-    int var_id = -1;
+    int var_id = FindNametableDupId (tree->nametable, var_name);
 
-    if ((var_id = FindNametableDups(nametable, word)) == -1) // no dups
+    if (var_id == -1) // not found in nametable
     {
-        var_id = UpdNameTable(nametable, word);
+        var_id = UpdNameTable (tree->nametable, var_name);
 
-        if (!ScanVariableVal(nametable, var_id)) return READ_ASSIGN_VAR_ERR;
+        if (tree->nametable->dx_id == -1 && IsGradientMember (var_name))
+            tree->nametable->dx_id = var_id;
+
+        if (!ScanVariableVal (tree->nametable, var_id))
+            RET_ERROR(READ_ASSIGN_VAR_ERR, "Variable scanning error: number not assigned");
     }
 
     data->type = VAR;
@@ -1032,7 +1061,7 @@ ReadAssignDoubleRes ReadAssignDouble (NodeData * data, char * word)
     if (IsDouble(word)) // ! may be unsafe see function code
     {
         data->type = NUM;
-        data->val = atof(word);
+        data->val  = atof (word);
 
         return READ_ASSIGN_DBL_SUCCESS; // assigned double to data
     }
@@ -1042,14 +1071,14 @@ ReadAssignDoubleRes ReadAssignDouble (NodeData * data, char * word)
 
 // ============================================================================================
 
-int ScanVariableVal (NameTable * nametable, int var_id)
+int ScanVariableVal (NameTable* nametable, int var_id)
 {
     assert(nametable);
     if (!nametable) RET_ERROR(0, "Nametable null pointer");
 
-    fprintf(stdout, "Please specify variable \"%s\"\n>> ", nametable->names[var_id]);
+    fprintf (stdout, "Please specify variable \"%s\"\n>> ", nametable->names[var_id]);
 
-    return fscanf(stdin, "%lf", &nametable->vals[var_id]);
+    return fscanf (stdin, "%lf", &nametable->vals[var_id]);
 }
 
 // ============================================================================================
@@ -1069,7 +1098,7 @@ int FindOperation (int opcode)
 
 // ============================================================================================
 
-int FindNametableDups (NameTable * nametable, const char * word)
+int FindNametableDupId (const NameTable * nametable, const char * word)
 {
     assert (nametable);
     assert (word);
@@ -1085,21 +1114,23 @@ int FindNametableDups (NameTable * nametable, const char * word)
     return -1; // no duplicates
 }
 
+// ============================================================================================
+
 int IsDouble (char * word)
 {
-    // although it handles most used cases, it
+    // although it covers most cases, it
     // may be unsafe, not tested properly
 
     assert (word);
     if (!word) RET_ERROR (0, "Word null pointer");
 
     if (IsZero (atof (word)) && *word != '0' && *word != '.')
-    {
         return 0;
-    }
 
     return 1;
 }
+
+// ============================================================================================
 
 int IsZero (double num)
 {
