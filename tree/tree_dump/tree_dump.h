@@ -62,25 +62,25 @@ typedef enum
 
 
 int   TreeTexDump     (const Tree* tree);
-FILE* InitTexDump     (const Tree* tree, char * tex_path);
+FILE* InitTexDump     (const Tree* tree, char* tex_path);
 int   CompileLatex    (const char* tex_path);
 int   ConcludeTexDump (FILE* tex_file);
 
-TexTreePrintRes    TexTreePrint    (FILE* tex_file, const Tree * tree);
-TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const Tree* tree);
+TexTreePrintRes    TexTreePrint    (FILE* tex_file, const Tree* tree);
+TexSubtreePrintRes TexSubtreePrint (FILE* tex_file, const TreeNode* prev, const TreeNode* node, const Tree* tree);
 
-int   TreeDotDump     (const char * fname, const Tree * tree);
+int   TreeDotDump     (const char* fname, const Tree* tree);
 FILE* InitDotDump     (const Tree* tree, char* dot_path, DotDumpType dump_type);
 int   CompileDot      (char* dot_path, int dump_id, DotDumpType dump_type);
-int   WriteHTML       (const char * HTML_fname, int dump_id);
+int   WriteHTML       (const char* HTML_fname, int dump_id);
 int   ConcludeDotDump (FILE* tex_file);
 
-DotTreePrintRes DotTreePrint    (FILE* dot_file, const Tree * tree);
+DotTreePrintRes DotTreePrint    (FILE* dot_file, const Tree* tree);
 DotTreePrintRes DotSubtreePrint (FILE* dot_file, const TreeNode* node, const Tree* tree, int* node_id);
 
-DotTreePrintRes DotTreeDetailedPrint    (FILE* dot_file, const Tree * tree);
-DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, const Tree* tree, int* node_id);
+DotTreePrintRes DotTreeDetailedPrint    (FILE* dot_file, const Tree* tree);
+DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode* node, const Tree* tree, int* node_id);
 
-char * GetFilePath (const char * path, const char * fname);
+char* GetFilePath (const char* path, const char* fname);
 
 #endif // TREE_DUMP_H

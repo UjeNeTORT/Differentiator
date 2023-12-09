@@ -18,7 +18,7 @@
 
 // ============================================================================================
 
-int TreeTexDump (const Tree * tree)
+int TreeTexDump (const Tree* tree)
 {
     assert(tree);
 
@@ -40,14 +40,13 @@ int TreeTexDump (const Tree * tree)
 
 // ============================================================================================
 
-FILE* InitTexDump (const Tree* tree, char * tex_path)
+FILE* InitTexDump (const Tree* tree, char* tex_path)
 {
     assert (tree);
     assert (tex_path);
     if (!tree) RET_ERROR(NULL, "Tree null pointer");
     if (!tex_path) RET_ERROR(NULL, "Tex_path null pointer");
 
-    srand(time(0));
     int dump_id = (int) time(NULL);
 
     sprintf(tex_path, "expr_%d.tex", dump_id); // stores filename
@@ -56,9 +55,9 @@ FILE* InitTexDump (const Tree* tree, char * tex_path)
     free(temp_tex_path);
 
     time_t t = time (NULL);
-    tm * loc_time = localtime (&t);
+    tm* loc_time = localtime (&t);
 
-    FILE * tex_file = fopen (tex_path, "wb");
+    FILE* tex_file = fopen (tex_path, "wb");
 
     fprintf (tex_file,  "\\documentclass[a4paper,12pt]{article}\n\n"
                         "\\usepackage[T2A]{fontenc}"
@@ -135,7 +134,7 @@ int ConcludeTexDump (FILE* tex_file)
 
 // ============================================================================================
 
-int TreeDotDump (const char * HTML_fname, const Tree * tree)
+int TreeDotDump (const char* HTML_fname, const Tree* tree)
 {
     assert (HTML_fname);
     assert(tree);
@@ -175,7 +174,6 @@ FILE* InitDotDump (const Tree* tree, char* dot_path, DotDumpType dump_type)
     if (dump_type != SIMPLE_DUMP && dump_type != DETAILED_DUMP)
                 RET_ERROR(NULL, "Unknown dump type %d", dump_type);
 
-    srand(time(0));
     int dump_id = (int) time(NULL);
 
     if (dump_type == SIMPLE_DUMP)
@@ -187,7 +185,7 @@ FILE* InitDotDump (const Tree* tree, char* dot_path, DotDumpType dump_type)
     strcpy(dot_path, temp_dot_path);
     free(temp_dot_path);
 
-    FILE * dot_file = fopen (dot_path, "wb");
+    FILE* dot_file = fopen (dot_path, "wb");
 
     if (dump_type == SIMPLE_DUMP)
         fprintf (dot_file, "digraph TREE {\n"
@@ -201,7 +199,7 @@ FILE* InitDotDump (const Tree* tree, char* dot_path, DotDumpType dump_type)
 
 // ============================================================================================
 
-DotTreePrintRes DotTreePrint (FILE* dot_file, const Tree * tree)
+DotTreePrintRes DotTreePrint (FILE* dot_file, const Tree* tree)
 {
     assert(dot_file);
     assert(tree);
@@ -234,17 +232,17 @@ int CompileDot (char* dot_path, int dump_id, DotDumpType dump_type)
 
 // ============================================================================================
 
-int WriteHTML (const char * HTML_fname, int dump_id)
+int WriteHTML (const char* HTML_fname, int dump_id)
 {
     assert (HTML_fname);
 
-    char * HTML_path = GetFilePath(HTML_DUMPS_PATH, HTML_fname);
+    char* HTML_path = GetFilePath(HTML_DUMPS_PATH, HTML_fname);
 
     time_t t = time (NULL);
 
-    tm * loc_time = localtime (&t);
+    tm* loc_time = localtime (&t);
 
-    FILE * HTML_file = fopen (HTML_path, "wb"); // ! attention, deletion of old dumps
+    FILE* HTML_file = fopen (HTML_path, "wb"); // ! attention, deletion of old dumps
     fprintf(HTML_file, "<div graph_%d style=\"background-color: %s; color: %s;\">\n", dump_id, GRAPH_BGCLR, GRAPH_TEXTCLR);
 
     fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE</p>", "#283D3B", asctime(loc_time));
@@ -286,7 +284,7 @@ int ConcludeDotDump (FILE* dot_file)
 
 // ============================================================================================
 
-TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const Tree* tree)
+TexSubtreePrintRes TexSubtreePrint (FILE* tex_file, const TreeNode* prev, const TreeNode* node, const Tree* tree)
 {
     assert(tex_file);
 
@@ -297,7 +295,7 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
     if (!node)
         return TEX_SUBT_PRINT_SUCCESS;
 
-    const char * op_name = NULL;
+    const char* op_name = NULL;
 
     int opnum = 0;
     int print_parenthesis = 0;
@@ -341,7 +339,7 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
                 RET_ERROR(TEX_SUBT_PRINT_ERR, "No such operation (%d)\n", (int) VAL(node));
             }
 
-            if (prev && OPERATIONS[FindOperation((int) prev->data.val)].priority >
+            if (prev && OPERATIONS[FindOperation((int) VAL(prev))].priority >
                         OPERATIONS[FindOperation((int) VAL(node))].priority) //! here we assume that prev is operation node
             {
                 print_parenthesis = 1;
@@ -380,7 +378,7 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
 
 // ============================================================================================
 
-DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tree* tree, int* node_id)
+DotTreePrintRes DotSubtreePrint (FILE* dot_file, const TreeNode* node, const Tree* tree, int* node_id)
 {
     assert(dot_file);
     assert(tree);
@@ -397,7 +395,7 @@ DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tr
 
     *node_id = rand();
 
-    const char * color = "";
+    const char* color = "";
     char node_data[MAX_OP] = "";
 
     int opnum = 0;
@@ -407,16 +405,34 @@ DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tr
     case ERR:
         color = GRAPH_ERRCLR;
         sprintf(node_data, "ERR");
+
+        break;
+
+    case ROOT: // pinch of copypaste
+        color = GRAPH_ERRCLR;
+        opnum = FindOperation((int) VAL(node));
+        sprintf(node_data, "%s", OPERATIONS[opnum].name);
+
         break;
 
     case NUM:
         color = GRAPH_NUMCLR;
         sprintf(node_data, "%.2lf", VAL(node));
+
         break;
 
     case VAR:
         color = GRAPH_VARCLR;
         sprintf (node_data, "%s", tree->nametable->names[(int) VAL(node)]); // get varname from nametable
+
+        break;
+
+    case UN_OP:
+        color = GRAPH_OPCLR;
+
+        opnum = FindOperation((int) VAL(node));
+        sprintf(node_data, "%s", OPERATIONS[opnum].name);
+
         break;
 
     case BI_OP:
@@ -427,14 +443,9 @@ DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tr
 
         break;
 
-    case UN_OP: // ! doesnt work
-        color = GRAPH_OPCLR;
-
-        opnum = FindOperation((int) VAL(node));
-        sprintf(node_data, "%s", OPERATIONS[opnum].name);
-        break;
-
     default:
+        RET_ERROR(DOT_PRINT_ERR, "Unknown node type (%d)", TYPE(node));
+
         break;
     }
 
@@ -460,7 +471,7 @@ DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tr
 
 // ============================================================================================
 
-DotTreePrintRes DotTreeDetailedPrint (FILE* dot_file, const Tree * tree)
+DotTreePrintRes DotTreeDetailedPrint (FILE* dot_file, const Tree* tree)
 {
     assert(dot_file);
     assert(tree);
@@ -474,7 +485,7 @@ DotTreePrintRes DotTreeDetailedPrint (FILE* dot_file, const Tree * tree)
 
 // ============================================================================================
 
-DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, const Tree* tree, int* node_id)
+DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode* node, const Tree* tree, int* node_id)
 {
     assert(dot_file);
     assert(tree);
@@ -492,11 +503,15 @@ DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, 
 
     *node_id = rand();
 
-    const char * color = "";
+    const char* color = "";
 
     switch (TYPE(node))
     {
     case ERR:
+        color = GRAPH_ERRCLR;
+        break;
+
+    case ROOT:
         color = GRAPH_ERRCLR;
         break;
 
@@ -508,15 +523,17 @@ DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, 
         color = GRAPH_VARCLR;
         break;
 
-    case BI_OP:
-        color = GRAPH_OPCLR;
-        break;
-
     case UN_OP:
         color = GRAPH_OPCLR;
         break;
 
+    case BI_OP:
+        color = GRAPH_OPCLR;
+        break;
+
     default:
+        RET_ERROR(DOT_PRINT_ERR, "Unknown node type (%d)", TYPE(node));
+
         break;
     }
 
@@ -543,9 +560,9 @@ DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, 
 
 // ============================================================================================
 
-char * GetFilePath(const char * path, const char * fname)
+char* GetFilePath(const char* path, const char* fname)
 {
-    char * fpath = (char *) calloc(MAX_PATH, sizeof(char));
+    char* fpath = (char *) calloc(MAX_PATH, sizeof(char));
 
     strcat(fpath, path); // path must have / in the end
     strcat(fpath, fname);
