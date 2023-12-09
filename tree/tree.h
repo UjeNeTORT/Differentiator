@@ -142,6 +142,12 @@ typedef enum
 
 typedef enum
 {
+    SPECIFY_DX_SUCCESS   = 0,
+    SPECIFY_DX_NOT_GIVEN = 1,
+} SpecifyDxRes;
+
+typedef enum
+{
     SKIP_SPACES_SUCCESS    = 0,
     SKIP_SPACES_ERR        = 1,
     SKIP_SPACES_ERR_PARAMS = 2,
@@ -226,8 +232,8 @@ WriteTreeRes WriteSubtree  (FILE * stream, const TreeNode * node, const Tree* tr
 WriteTreeRes WriteTree     (FILE * stream, const Tree * tree);
 WriteTreeRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
-int FindNametableDupId (const NameTable * nametable, const char * word);
-int IsGradientMember   (const char* var_name); // GRADIENT? naming!!
+int FindVarInNametable (const NameTable * nametable, const char * word);
+SpecifyDxRes SpesifyDx (const NameTable* nametable);
 int IncorrectVarName   (const char * word);
 
 ReadAssignVariableRes ReadAssignVariable (NodeData* data, char* word, const Tree* tree);

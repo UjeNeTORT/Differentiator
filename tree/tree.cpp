@@ -547,7 +547,7 @@ NameTable* NameTableCtor ()
 
     for(size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        nametable->names[i]    = (char *) calloc(MAX_OP, sizeof(char));
+        nametable->names[i] = (char *) calloc(MAX_OP, sizeof(char));
 
         if (!nametable->names[i]) RET_ERROR(NULL, "names[%d] allocation error", i);
     }
@@ -817,6 +817,8 @@ Tree* ReadTree (const char * infix_tree)
 
     tree->root = ReadSubtree(infix_tree, tree, &offset);
 
+    SpesifyDx(tree->nametable);
+
     return tree;
 }
 
@@ -980,19 +982,27 @@ int IncorrectVarName (const char * word)
 
 // ============================================================================================
 
-int IsGradientMember (const char* var_name)
+SpecifyDxRes SpesifyDx (const NameTable* nametable)
 {
-    assert(var_name);
+    assert(nametable);
 
-    char* answer = (char *) calloc(USER_ANSW_SIZE, sizeof(char));
-    fprintf (stdout, "Do we differentiate with respect to %s [y|n]?\n>> ", var_name);
-    fscanf  (stdin, "%s", answer);
+    char* var_name = (char*) calloc(MAX_OP, sizeof(char));
+    fprintf(stdout, "Please, specify variable with respect to which we differentite\n>> ");
 
-    int ret_val = streq(answer, "y");
+    fscanf(stdin, "%s", var_name);
 
-    free(answer);
+    while (FindVarInNametable(nametable, var_name) == -1)
+    {
+        if (streq(var_name, "quit"))
+            return SPECIFY_DX_NOT_GIVEN;
 
-    return ret_val;
+        fprintf(stdout, "No such variable in nametable, try again (to quit type in \"quit\")\n>> ");
+        fscanf(stdin, "%s", var_name);
+    }
+
+    free(var_name);
+
+    return SPECIFY_DX_SUCCESS;
 }
 
 // ============================================================================================
@@ -1007,14 +1017,11 @@ ReadAssignVariableRes ReadAssignVariable (NodeData* data, char * var_name, const
     if (IncorrectVarName((const char *) var_name))
         RET_ERROR(READ_ASSIGN_VAR_ERR, "Incorrect variable name \"%s\"\n", var_name);
 
-    int var_id = FindNametableDupId (tree->nametable, var_name);
+    int var_id = FindVarInNametable (tree->nametable, var_name);
 
     if (var_id == -1) // not found in nametable
     {
         var_id = UpdNameTable (tree->nametable, var_name);
-
-        if (tree->nametable->dx_id == -1 && IsGradientMember (var_name))
-            tree->nametable->dx_id = var_id;
 
         if (!ScanVariableVal (tree->nametable, var_id))
             RET_ERROR(READ_ASSIGN_VAR_ERR, "Variable scanning error: number not assigned");
@@ -1098,7 +1105,7 @@ int FindOperation (int opcode)
 
 // ============================================================================================
 
-int FindNametableDupId (const NameTable * nametable, const char * word)
+int FindVarInNametable (const NameTable * nametable, const char * word)
 {
     assert (nametable);
     assert (word);
