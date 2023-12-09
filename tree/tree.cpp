@@ -247,8 +247,6 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     assert(tree);
     if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
 
-    PRINTF_DEBUG("tree received:\n");
-    WriteTree(stdout, tree);
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
     int tree_changed_flag = 0;
@@ -982,23 +980,29 @@ int IncorrectVarName (const char * word)
 
 // ============================================================================================
 
-SpecifyDxRes SpesifyDx (const NameTable* nametable)
+SpecifyDxRes SpesifyDx (NameTable* nametable)
 {
     assert(nametable);
 
     char* var_name = (char*) calloc(MAX_OP, sizeof(char));
-    fprintf(stdout, "Please, specify variable with respect to which we differentite\n>> ");
 
+    fprintf(stdout, "Please, specify variable with respect to which we differentite\n>> ");
     fscanf(stdin, "%s", var_name);
 
-    while (FindVarInNametable(nametable, var_name) == -1)
+    int dx_id = FindVarInNametable(nametable, var_name);
+
+    while (dx_id == -1) // not found
     {
         if (streq(var_name, "quit"))
-            return SPECIFY_DX_NOT_GIVEN;
+            return SPECIFY_DX_QUIT_NOT_FIVEN;
 
-        fprintf(stdout, "No such variable in nametable, try again (to quit type in \"quit\")\n>> ");
-        fscanf(stdin, "%s", var_name);
+        fprintf (stdout, "No such variable in nametable, try again (to quit type in \"quit\")\n>> ");
+        fscanf (stdin, "%s", var_name);
+
+        dx_id = FindVarInNametable(nametable, var_name);
     }
+
+    nametable->dx_id = dx_id;
 
     free(var_name);
 

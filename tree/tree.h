@@ -142,8 +142,8 @@ typedef enum
 
 typedef enum
 {
-    SPECIFY_DX_SUCCESS   = 0,
-    SPECIFY_DX_NOT_GIVEN = 1,
+    SPECIFY_DX_SUCCESS        = 0,
+    SPECIFY_DX_QUIT_NOT_FIVEN = 1,
 } SpecifyDxRes;
 
 typedef enum
@@ -233,7 +233,7 @@ WriteTreeRes WriteTree     (FILE * stream, const Tree * tree);
 WriteTreeRes WriteNodeData (FILE * stream, NodeData data, const NameTable * nametable);
 
 int FindVarInNametable (const NameTable * nametable, const char * word);
-SpecifyDxRes SpesifyDx (const NameTable* nametable);
+SpecifyDxRes SpesifyDx (NameTable* nametable);
 int IncorrectVarName   (const char * word);
 
 ReadAssignVariableRes ReadAssignVariable (NodeData* data, char* word, const Tree* tree);
