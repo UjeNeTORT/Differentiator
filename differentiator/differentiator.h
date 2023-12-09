@@ -17,7 +17,7 @@
 
 // ===================== DSL =====================
 
-#define d(node) Derivative(tex_file, node, tree)
+#define d(node) Derivative(node, tree, tex_file)
 #define c(node) SubtreeCopyOf(node)
 
 #define dL d(node->left)
@@ -41,14 +41,14 @@
 
 // ===============================================
 
-Tree*     Derivative (const Tree * tree);
+Tree*     Derivative (const Tree* tree);
 TreeNode* Derivative (const TreeNode* node, Tree* tree);
 
-TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree);
+/**
+ * parameters "tree" and "tex_file" cannot exist without each other
+*/
+TreeNode* Derivative (const TreeNode* node, Tree* tree, FILE* tex_file);
 
 Tree*     DerivativeReport (const Tree* tree);
-TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, Tree* tree);
-
-int GetVarId (const Tree* tree, const char * var_name);
 
 #endif // DIFFERENTIATOR_H

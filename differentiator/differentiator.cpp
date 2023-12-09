@@ -17,7 +17,7 @@
 
 // ============================================================================================
 
-Tree* Derivative (const Tree * tree)
+Tree* Derivative (const Tree* tree)
 {
     assert (tree);
     if (!tree) RET_ERROR (NULL, "Tree null pointer");
@@ -29,8 +29,8 @@ Tree* Derivative (const Tree * tree)
     diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
                                                 Derivative (tree->root, diff_tree));
 
-    if (TreeSimplify (diff_tree) != TREE_SIMPLIFY_SUCCESS)
-                RET_ERROR(NULL, "Tree simplification function returned error code");
+    // if (TreeSimplify (diff_tree) != TREE_SIMPLIFY_SUCCESS)
+                // RET_ERROR(NULL, "Tree simplification function returned error code");
 
     return diff_tree;
 }
@@ -41,13 +41,15 @@ TreeNode* Derivative (const TreeNode* node, Tree* tree)
 {
     assert(node);
 
-    return Derivative (NULL, node, tree);
+    return Derivative (node, tree, NULL);
 }
 
 // ============================================================================================
 
-TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
+TreeNode* Derivative (const TreeNode* node, Tree* tree, FILE* tex_file)
 {
+    if (tex_file && !tree) RET_ERROR(NULL, "No tree pointer, check docs");
+
     if (!node) return NULL;
 
     if (TYPE(node) == ERR) RET_ERROR (NULL, "Error node passed to differentiation function\n");
@@ -87,7 +89,30 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
         break;
 
     case POW:
-        d_node = _MUL(_ADD(_MUL(dR, _LN(cL)), _DIV(_MUL(dL, cR), cL)), _POW(cL, cR));
+        // 2^2
+        if (!SubtreeHasVars(node->left, tree->nametable) &&
+            !SubtreeHasVars(node->right, tree->nametable))
+        {
+            d_node = _NUM(0);
+        }
+        // x^2
+        else if (SubtreeHasVars(node->left, tree->nametable) &&
+                !SubtreeHasVars(node->right, tree->nametable))
+        {
+            d_node = _MUL(dL, _MUL(cR, _POW(cL, _SUB(cR, _NUM(1)))));
+        }
+        // 2^x
+        else if (!SubtreeHasVars(node->left, tree->nametable) &&
+                            SubtreeHasVars(node->right, tree->nametable))
+        {
+            d_node = _MUL(dR, _MUL(_POW(cL, cR), _LN(cL)));
+        }
+        // x^x
+        else
+        {
+            d_node = _MUL(_ADD(_MUL(dR, _LN(cL)), _DIV(_MUL(dL, cR), cL)), _POW(cL, cR));
+        }
+
         break;
 
     case EXP:
@@ -152,6 +177,7 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
     }
 
     int dummy_tree_changed_flag = 0;
+
     if (SubtreeSimplifyConstants(d_node, &dummy_tree_changed_flag) != TREE_SIMPLIFY_SUCCESS)
         RET_ERROR(NULL, "Tree constants simplification error. Tree corrupted.");
 
@@ -186,9 +212,7 @@ Tree* DerivativeReport (const Tree* tree)
     FILE* tex_file = InitTexDump(diff_tree, tex_path);
 
     diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
-                                    SubtreeDerivativeTexReport(tex_file, tree->root, diff_tree));
-
-    TreeDtor(diff_tree);
+                                        Derivative(tree->root, diff_tree, tex_file));
 
     ConcludeTexDump(tex_file);
 
@@ -197,31 +221,4 @@ Tree* DerivativeReport (const Tree* tree)
     return diff_tree;
 }
 
-// ============================================================================================
 
-TreeNode* SubtreeDerivativeTexReport (FILE* tex_file, const TreeNode* node, Tree* tree)
-{
-    if (!tex_file) RET_ERROR(NULL, "Tex stream null pointer");
-
-    return Derivative(tex_file, node, tree);
-}
-
-// ============================================================================================
-
-int GetVarId (const Tree* tree, const char * var_name)
-{
-    assert(tree);
-    assert(var_name);
-
-    int var_id = 0;
-
-    while (var_id != NAMETABLE_CAPACITY)
-    {
-        if (streq(tree->nametable->names[var_id], var_name))
-            return var_id;
-
-        var_id++;
-    }
-
-    return NAMETABLE_CAPACITY;
-}
