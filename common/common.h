@@ -1,7 +1,7 @@
 /*************************************************************************
  * (c) 2023 Tikhonov Yaroslav (aka UjeNeTORT)
  *
- * email: tikhonovty@gmail.com
+ * email:    tikhonovty@gmail.com
  * telegram: https://t.me/netortofficial
  * GitHub:   https://github.com/UjeNeTORT
  * repo:     https://github.com/UjeNeTORT/Tree
@@ -28,13 +28,12 @@ const int USER_ANSW_SIZE = 10;
     {                                                        \
         printf("hehe aborting your computer and your nerves right now for free!))))))\n"); \
     }                                                        \
-    system("shutdown -P now");                               \
 }                                                            \
+    // system("shutdown -P now");
 
-
-int PrintfDebug   (const char * funcname, int line, const char * filename, const char * format, ...); // todo COPYPASTE, need single unique function
-int PrintfError   (const char * funcname, int line, const char * filename, const char * format, ...); // todo COPYPASTE, need single unique function
-int PrintfWarning (const char * funcname, int line, const char * filename, const char * format, ...); // todo COPYPASTE, need single unique function
+int PrintfDebug   (const char* funcname, int line, const char* filename, const char* format, ...); // todo COPYPASTE, need single unique function
+int PrintfError   (const char* funcname, int line, const char* filename, const char* format, ...); // todo COPYPASTE, need single unique function
+int PrintfWarning (const char* funcname, int line, const char* filename, const char* format, ...); // todo COPYPASTE, need single unique function
 
 #define PRINTF_DEBUG(format, ...) \
     PrintfDebug (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
@@ -45,9 +44,9 @@ int PrintfWarning (const char * funcname, int line, const char * filename, const
 #define ERROR(format, ...) \
     PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__)
 
-#define RET_ERROR(err_code, format, ...) \
+#define RET_ERROR(ret_val, format, ...) \
     { PrintfError (__FUNCTION__, __LINE__, __FILE__, format __VA_OPT__(,) __VA_ARGS__); \
-      return err_code;}
+      return ret_val;}
 
 
 #endif // TOOLS_H

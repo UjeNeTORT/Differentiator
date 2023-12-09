@@ -12,7 +12,7 @@
 #include <stdarg.h>
 
 #include "../colors.h"
-#include "tools.h"
+#include "common.h"
 
 int PrintfDebug (const char * funcname, int line, const char * filename, const char * format, ...)
 {

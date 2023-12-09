@@ -1,7 +1,7 @@
 /*************************************************************************
  * (c) 2023 Tikhonov Yaroslav (aka UjeNeTORT)
  *
- * email: tikhonovty@gmail.com
+ * email:    tikhonovty@gmail.com
  * telegram: https://t.me/netortofficial
  * GitHub:   https://github.com/UjeNeTORT
  * repo:     https://github.com/UjeNeTORT/Differentiator
@@ -10,10 +10,10 @@
 #ifndef DIFFERENTIATOR_H
 #define DIFFERENTIATOR_H
 
+#include "../common/common.h"
 #include "../tree/tree.h"
 #include "../tree/tree_dump/tree_dump.h"
 #include "rofls.h"
-#include "../tools/tools.h"
 
 // ===================== DSL =====================
 
@@ -49,6 +49,6 @@ TreeNode* Derivative (const TreeNode* node, Tree* tree);
 */
 TreeNode* Derivative (const TreeNode* node, Tree* tree, FILE* tex_file);
 
-Tree*     DerivativeReport (const Tree* tree);
+Tree* DerivativeReport (const Tree* tree);
 
 #endif // DIFFERENTIATOR_H

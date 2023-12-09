@@ -1,7 +1,7 @@
 /*************************************************************************
  * (c) 2023 Tikhonov Yaroslav (aka UjeNeTORT)
  *
- * email: tikhonovty@gmail.com
+ * email:    tikhonovty@gmail.com
  * telegram: https://t.me/netortofficial
  * GitHub:   https://github.com/UjeNeTORT
  * repo:     https://github.com/UjeNeTORT/Differentiator

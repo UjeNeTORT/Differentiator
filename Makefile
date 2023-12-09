@@ -8,8 +8,8 @@ TEST_MAIN = ./test.exe
 MAIN = ./main.exe
 CPP = g++
 
-start: tree.o tree_dump.o differentiator.o tools.o main.o
-	$(CPP) tree.o tree_dump.o differentiator.o tools.o test.o -o $(TEST_MAIN) $(DEBUG)
+start: tree.o tree_dump.o differentiator.o common.o main.o
+	$(CPP) tree.o tree_dump.o differentiator.o common.o test.o -o $(TEST_MAIN) $(DEBUG)
 	$(TEST_MAIN)
 
 tree.o : tree/tree.cpp
@@ -21,8 +21,8 @@ tree_dump.o : tree/tree_dump/tree_dump.cpp
 differentiator.o : differentiator/differentiator.cpp
 	$(CPP) differentiator/differentiator.cpp -c
 
-tools.o : tools/tools.cpp
-	$(CPP) tools/tools.cpp -c
+common.o : common/common.cpp
+	$(CPP) common/common.cpp -c
 
 main.o : test.cpp
 	$(CPP) test.cpp -c

@@ -1,7 +1,7 @@
 /*************************************************************************
  * (c) 2023 Tikhonov Yaroslav (aka UjeNeTORT)
  *
- * email: tikhonovty@gmail.com
+ * email:    tikhonovty@gmail.com
  * telegram: https://t.me/netortofficial
  * GitHub:   https://github.com/UjeNeTORT
  * repo:     https://github.com/UjeNeTORT/Differentiator
@@ -660,9 +660,8 @@ NameTableCopyRes NameTableCopy (NameTable* dst, const NameTable* src)
 
     for (size_t i = 0; i < NAMETABLE_CAPACITY; i++)
     {
-        free(dst->names[i]); // memory allocated in ctor
-        dst->names[i] = strdup(src->names[i]);
-        dst->vals[i]  = src->vals[i];
+        memcpy(dst->names[i], src->names[i], strlen(src->names[i]));
+        dst->vals[i] = src->vals[i];
     }
 
     dst->dx_id = src->dx_id;

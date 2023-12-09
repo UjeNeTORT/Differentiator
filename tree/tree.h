@@ -1,7 +1,7 @@
 /*************************************************************************
  * (c) 2023 Tikhonov Yaroslav (aka UjeNeTORT)
  *
- * email: tikhonovty@gmail.com
+ * email:    tikhonovty@gmail.com
  * telegram: https://t.me/netortofficial
  * GitHub:   https://github.com/UjeNeTORT
  * repo:     https://github.com/UjeNeTORT/Differentiator
@@ -12,8 +12,8 @@
 
 #include <stdio.h>
 
+#include "../common/common.h"
 #include "../colors.h"
-#include "../tools/tools.h"
 #include "operations.h"
 
 const int MAX_TREE = 5000; // max len of a string-written tree in a file

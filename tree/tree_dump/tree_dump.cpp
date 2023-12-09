@@ -1,7 +1,7 @@
 /*************************************************************************
  * (c) 2023 Tikhonov Yaroslav (aka UjeNeTORT)
  *
- * email: tikhonovty@gmail.com
+ * email:    tikhonovty@gmail.com
  * telegram: https://t.me/netortofficial
  * GitHub:   https://github.com/UjeNeTORT
  * repo:     https://github.com/UjeNeTORT/Differentiator
@@ -243,19 +243,25 @@ int WriteHTML (const char* HTML_fname, int dump_id)
     tm* loc_time = localtime (&t);
 
     FILE* HTML_file = fopen (HTML_path, "wb"); // ! attention, deletion of old dumps
-    fprintf(HTML_file, "<div graph_%d style=\"background-color: %s; color: %s;\">\n", dump_id, GRAPH_BGCLR, GRAPH_TEXTCLR);
+    fprintf(HTML_file, "<div graph_%d style=\"background-color: %s; color: %s;\">\n",
+                                                        dump_id, GRAPH_BGCLR, GRAPH_TEXTCLR);
 
-    fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE</p>", "#283D3B", asctime(loc_time));
+    fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE</p>",
+                                                                            "#283D3B", asctime(loc_time));
 
-    fprintf (HTML_file, "<img src=\"../../../../%sgraph_dump_%d.svg\">\n", GRAPH_SVGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
+    fprintf (HTML_file, "<img src=\"../../../../%sgraph_dump_%d.svg\">\n",
+                                                    GRAPH_SVGS_PATH, dump_id);
 
     fprintf(HTML_file, "</div>\n");
 
-    fprintf(HTML_file, "<div detailed_graph_%d style=\"background-color: %s; color: %s;\">\n", dump_id, GRAPH_BGCLR, GRAPH_TEXTCLR);
+    fprintf(HTML_file, "<div detailed_graph_%d style=\"background-color: %s; color: %s;\">\n",
+                                                                dump_id, GRAPH_BGCLR, GRAPH_TEXTCLR);
 
-    fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE DETAILED </p>", "#283D3B", asctime(loc_time));
+    fprintf (HTML_file, "<p style=\"color: %s; font-family:monospace; font-size: 20px\">[%s] TREE DETAILED </p>",
+                                                                            "#283D3B", asctime(loc_time));
 
-    fprintf (HTML_file, "<img src=\"../../../../%sdetailed_graph_dump_%d.svg\">\n", GRAPH_SVGS_PATH, dump_id); //! ../../...crutch - dont know how to specify relative path
+    fprintf (HTML_file, "<img src=\"../../../../%sdetailed_graph_dump_%d.svg\">\n",
+                                                    GRAPH_SVGS_PATH, dump_id);
 
     fprintf(HTML_file, "</div>\n");
 
@@ -284,7 +290,8 @@ int ConcludeDotDump (FILE* dot_file)
 
 // ============================================================================================
 
-TexSubtreePrintRes TexSubtreePrint (FILE* tex_file, const TreeNode* prev, const TreeNode* node, const Tree* tree)
+TexSubtreePrintRes TexSubtreePrint (FILE* tex_file, const TreeNode* prev,
+                                    const TreeNode* node, const Tree* tree)
 {
     assert(tex_file);
 
@@ -562,6 +569,9 @@ DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode* node, c
 
 char* GetFilePath(const char* path, const char* fname)
 {
+    assert(path);
+    assert(fname);
+
     char* fpath = (char *) calloc(MAX_PATH, sizeof(char));
 
     strcat(fpath, path); // path must have / in the end
