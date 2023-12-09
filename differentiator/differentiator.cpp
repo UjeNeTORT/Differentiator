@@ -26,7 +26,8 @@ Tree* Derivative (const Tree * tree)
 
     NameTableCopy (diff_tree->nametable, tree->nametable);
 
-    diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL, Derivative (tree->root, diff_tree));
+    diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
+                                                Derivative (tree->root, diff_tree));
 
     if (TreeSimplify (diff_tree) != TREE_SIMPLIFY_SUCCESS)
                 RET_ERROR(NULL, "Tree simplification function returned error code");
@@ -150,14 +151,21 @@ TreeNode* Derivative (FILE* tex_file, const TreeNode* node, Tree* tree)
         break;
     }
 
+    int dummy = 0;
+    if (SubtreeSimplifyConstants(d_node, &dummy) != TREE_SIMPLIFY_SUCCESS)
+        RET_ERROR(NULL, "Tree constants simplification error. Tree corrupted.");
+
+    if (SubtreeSimplifyNeutrals (d_node, &dummy))
+        RET_ERROR(NULL, "Tree neutrals simplification error. Tree corrupted.");
+
     if (tex_file && (int) VAL(node) != EQUAL)
     {
         fprintf(tex_file, "%s\n", MATAN_PHRASES[rand() % MATAN_PHRASES_COUNT]);
         fprintf(tex_file, "$$  (");
         TexSubtreePrint(tex_file, NULL, node, tree);
-        fprintf(tex_file, ")\' = $$\n");
+        fprintf(tex_file, ")_{d %s}\' = $$\n", tree->nametable->names[tree->nametable->dx_id]);
 
-        fprintf(tex_file, "$$  ");
+        fprintf(tex_file, "$$ = ");
         TexSubtreePrint(tex_file, node, d_node, tree);
         fprintf(tex_file, "  $$\n");
     }
@@ -179,6 +187,8 @@ Tree* DerivativeReport (const Tree* tree)
 
     diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
                                     SubtreeDerivativeTexReport(tex_file, tree->root, diff_tree));
+
+    TreeDtor(diff_tree);
 
     ConcludeTexDump(tex_file);
 
