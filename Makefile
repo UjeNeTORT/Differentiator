@@ -31,12 +31,11 @@ clean:
 	rm -f $(TARGET)
 	rm -f *.o
 	rm -f tree/tree_dump/dumps/png/*.*
-	rm -f tree/tree_dump/dumps/dot_files/*.*
+	rm -f tree/tree_dump/dumps/dot/*.*
 	rm -f tree/tree_dump/dumps/dumps/*.*
 	rm -f tree/tree_dump/dumps/tex/*.*
 	rm -f *.out
 	rm -f *.exe
-	rm -f *.dot
 	rm -f tree/tree_dump/dumps/pdf/*.aux
 	rm -f tree/tree_dump/dumps/pdf/*.log
 	rm -f tree/tree_dump/dumps/pdf/*.pdf
