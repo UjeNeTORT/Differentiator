@@ -16,6 +16,8 @@
 
 #include "tree_dump.h"
 
+// ============================================================================================
+
 int TreeTexDump (const Tree * tree)
 {
     assert(tree);
@@ -35,6 +37,8 @@ int TreeTexDump (const Tree * tree)
 
     return 0;
 }
+
+// ============================================================================================
 
 FILE* InitTexDump (const Tree* tree, char * tex_path)
 {
@@ -72,6 +76,8 @@ FILE* InitTexDump (const Tree* tree, char * tex_path)
     return tex_file;
 }
 
+// ============================================================================================
+
 TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree* tree)
 {
     assert (tex_file);
@@ -97,6 +103,8 @@ TexTreePrintRes TexTreePrint (FILE* tex_file, const Tree* tree)
     return TEX_PRINT_SUCCESS;
 }
 
+// ============================================================================================
+
 int CompileLatex(const char* tex_path)
 {
     assert(tex_path);
@@ -113,6 +121,8 @@ int CompileLatex(const char* tex_path)
     return 0;
 }
 
+// ============================================================================================
+
 int ConcludeTexDump (FILE* tex_file)
 {
     assert(tex_file);
@@ -122,6 +132,8 @@ int ConcludeTexDump (FILE* tex_file)
 
     return 0;
 }
+
+// ============================================================================================
 
 int TreeDotDump (const char * HTML_fname, const Tree * tree)
 {
@@ -151,6 +163,8 @@ int TreeDotDump (const char * HTML_fname, const Tree * tree)
 
     return dump_id;
 }
+
+// ============================================================================================
 
 FILE* InitDotDump (const Tree* tree, char* dot_path, DotDumpType dump_type)
 {
@@ -185,6 +199,8 @@ FILE* InitDotDump (const Tree* tree, char* dot_path, DotDumpType dump_type)
     return dot_file;
 }
 
+// ============================================================================================
+
 DotTreePrintRes DotTreePrint (FILE* dot_file, const Tree * tree)
 {
     assert(dot_file);
@@ -197,6 +213,8 @@ DotTreePrintRes DotTreePrint (FILE* dot_file, const Tree * tree)
 
     return DOT_PRINT_SUCCESS;
 }
+
+// ============================================================================================
 
 int CompileDot (char* dot_path, int dump_id, DotDumpType dump_type)
 {
@@ -213,6 +231,8 @@ int CompileDot (char* dot_path, int dump_id, DotDumpType dump_type)
 
     return 0;
 }
+
+// ============================================================================================
 
 int WriteHTML (const char * HTML_fname, int dump_id)
 {
@@ -251,6 +271,8 @@ int WriteHTML (const char * HTML_fname, int dump_id)
     return 0;
 }
 
+// ============================================================================================
+
 int ConcludeDotDump (FILE* dot_file)
 {
     assert(dot_file);
@@ -262,16 +284,18 @@ int ConcludeDotDump (FILE* dot_file)
     return 0;
 }
 
+// ============================================================================================
+
 TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, const TreeNode * node, const Tree* tree)
 {
     assert(tex_file);
 
-    if (!prev) WARN("Prev null pointer (braces wont be printed)\n");
+    #ifdef WARNINGS
+        if (!prev) WARN("Prev null pointer (braces wont be printed)\n");
+    #endif // WARNINGS
 
     if (!node)
-    {
         return TEX_SUBT_PRINT_SUCCESS;
-    }
 
     const char * op_name = NULL;
 
@@ -283,12 +307,16 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
         case ERR:
             RET_ERROR(TEX_SUBT_PRINT_ERR, "Printer received error node");
 
+            break;
+
         case NUM:
             fprintf(tex_file, " {%.3lf} ", VAL(node));
+
             break;
 
         case VAR:
-            fprintf(tex_file, " {%s} ", tree->nametable.names[(int) VAL(node)]);
+            fprintf(tex_file, " {%s} ", tree->nametable->names[(int) VAL(node)]);
+
             break;
 
         case UN_OP:
@@ -343,10 +371,14 @@ TexSubtreePrintRes TexSubtreePrint (FILE * tex_file, const TreeNode * prev, cons
 
         default:
             RET_ERROR(TEX_SUBT_PRINT_ERR, "Invalid node type \"%d\"\n", TYPE(node));
+
+            break;
     }
 
     return TEX_SUBT_PRINT_SUCCESS;
 }
+
+// ============================================================================================
 
 DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tree* tree, int* node_id)
 {
@@ -384,7 +416,7 @@ DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tr
 
     case VAR:
         color = GRAPH_VARCLR;
-        sprintf(node_data, "%s", tree->nametable.names[(int) VAL(node)]); // get varname from nametable
+        sprintf (node_data, "%s", tree->nametable->names[(int) VAL(node)]); // get varname from nametable
         break;
 
     case BI_OP:
@@ -426,6 +458,8 @@ DotTreePrintRes DotSubtreePrint (FILE * dot_file, const TreeNode* node, const Tr
     return DOT_PRINT_SUCCESS;
 }
 
+// ============================================================================================
+
 DotTreePrintRes DotTreeDetailedPrint (FILE* dot_file, const Tree * tree)
 {
     assert(dot_file);
@@ -437,6 +471,8 @@ DotTreePrintRes DotTreeDetailedPrint (FILE* dot_file, const Tree * tree)
 
     return DotSubtreeDetailedPrint (dot_file, (const TreeNode *) tree->root, tree, &node_id);
 }
+
+// ============================================================================================
 
 DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, const Tree* tree, int* node_id)
 {
@@ -504,6 +540,8 @@ DotTreePrintRes DotSubtreeDetailedPrint (FILE* dot_file, const TreeNode * node, 
 
     return DOT_PRINT_SUCCESS;
 }
+
+// ============================================================================================
 
 char * GetFilePath(const char * path, const char * fname)
 {

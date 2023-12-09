@@ -14,6 +14,8 @@
 
 #include "../tree.h"
 
+#define WARNINGS 1
+
 const char DOT_FILE_PATH[]   = "tree/tree_dump/dumps/dot/";
 const char GRAPH_SVGS_PATH[] = "tree/tree_dump/dumps/png/";
 const char HTML_DUMPS_PATH[] = "tree/tree_dump/dumps/dumps/";
