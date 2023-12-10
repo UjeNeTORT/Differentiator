@@ -145,50 +145,6 @@ TreeEvalRes SubtreeEval (const TreeNode* node, const Tree* tree, double* result)
 
 // ============================================================================================
 
-TreeEvalRes SubtreeEvalNums (const TreeNode* node, double* result)
-{
-    assert(result);
-
-    if (!node) return TREE_EVAL_SUCCESS;
-
-    double left  = 0;
-    double right = 0;
-
-    TreeEvalRes ret_val = TREE_EVAL_SUCCESS;
-
-    switch (TYPE(node))
-    {
-
-    case NUM:
-        *result = VAL(node);
-        break;
-
-    case UN_OP:
-        if (SubtreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
-            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-
-        ret_val = SubtreeEvalUnOp(node, right, result);
-        break;
-
-    case BI_OP:
-        if (SubtreeEvalNums(node->left, &left) != TREE_EVAL_SUCCESS)
-            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-
-        if (SubtreeEvalNums(node->right, &right) != TREE_EVAL_SUCCESS)
-            RET_ERROR(TREE_EVAL_ERR, "Previous function returned error code");
-
-        ret_val = SubtreeEvalBiOp(node, left, right, result);
-        break;
-
-    default:
-        RET_ERROR(TREE_EVAL_FORBIDDEN, "Only nodes manipulating with numbers allowed (received node type = %d)", TYPE(node));
-    }
-
-    return ret_val;
-}
-
-// ============================================================================================
-
 TreeEvalRes SubtreeEvalUnOp (const TreeNode* node, double right, double* result)
 {
     assert(result);
@@ -342,7 +298,7 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
     if (TYPE(node) == VAR) return TREE_SIMPLIFY_SUCCESS;
     if (TYPE(node) == ROOT)
     {
-        SubtreeSimplifyConstants(node->right, tree_changed_flag);
+        SubtreeSimplifyConstants (node->right, tree_changed_flag);
 
         return TREE_SIMPLIFY_SUCCESS;
     }
@@ -359,8 +315,13 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
     if (TYPE(node) == UN_OP && TYPE(node->right) == NUM)
     {
-        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
+        if (SubtreeEvalUnOp (node, VAL(node->right), &VAL(node)) != TREE_EVAL_SUCCESS)
+            return TREE_SIMPLIFY_ERR;
+
         TYPE(node) = NUM;
+
+        TreeNodeDtor (node->right);
+        node->right = NULL;
 
         *tree_changed_flag = 1;
 
@@ -369,7 +330,9 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
 
     if (TYPE(node) == BI_OP && TYPE(node->left) == NUM && TYPE(node->right) == NUM)
     {
-        if (SubtreeEvalNums (node, &VAL(node)) != TREE_EVAL_SUCCESS) return TREE_SIMPLIFY_ERR;
+        if (SubtreeEvalBiOp (node, VAL(node->left), VAL(node->right), &VAL(node)) != TREE_EVAL_SUCCESS)
+            return TREE_SIMPLIFY_ERR;
+
         TYPE(node) = NUM;
 
         TreeNodeDtor (node->left);
