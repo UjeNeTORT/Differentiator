@@ -191,7 +191,6 @@ TreeErrorVector SubtreeVerify (const TreeNode* node);
 
 TreeEvalRes TreeEval        (const Tree* tree, double* result);
 TreeEvalRes SubtreeEval     (const TreeNode* node, const Tree* tree, double* result);
-TreeEvalRes SubtreeEvalNums (const TreeNode* node, double* result);
 TreeEvalRes SubtreeEvalUnOp (const TreeNode* node, double right, double* result);
 TreeEvalRes SubtreeEvalBiOp (const TreeNode* node, double left, double right, double* result);
 
