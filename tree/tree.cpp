@@ -268,6 +268,16 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     assert(tree);
     if (!tree) RET_ERROR(TREE_SIMLIFY_ERR_PARAMS, "Tree null pointer");
 
+    return SubtreeSimplify(tree->root);
+}
+
+// ============================================================================================
+
+TreeSimplifyRes SubtreeSimplify (TreeNode* node)
+{
+    assert(node);
+    if (!node) return TREE_SIMPLIFY_SUCCESS;
+
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
     int tree_changed_flag = 0;
@@ -275,10 +285,11 @@ TreeSimplifyRes TreeSimplify (Tree* tree)
     do
     {
         tree_changed_flag = 0;
-        ret_val = SubtreeSimplifyConstants (tree->root, &tree_changed_flag);
+
+        ret_val = SubtreeSimplifyConstants (node, &tree_changed_flag);
         if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
 
-        ret_val = SubtreeSimplifyNeutrals  (tree->root, &tree_changed_flag);
+        ret_val = SubtreeSimplifyNeutrals  (node, &tree_changed_flag);
         if (ret_val != TREE_SIMPLIFY_SUCCESS) break;
     } while (tree_changed_flag);
 
@@ -297,11 +308,7 @@ TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag
     if (TYPE(node) == NUM) return TREE_SIMPLIFY_SUCCESS;
     if (TYPE(node) == VAR) return TREE_SIMPLIFY_SUCCESS;
     if (TYPE(node) == ROOT)
-    {
-        SubtreeSimplifyConstants (node->right, tree_changed_flag);
-
-        return TREE_SIMPLIFY_SUCCESS;
-    }
+        return SubtreeSimplifyConstants (node->right, tree_changed_flag);
 
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
@@ -358,11 +365,7 @@ TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag
     if (TYPE(node) == NUM) return TREE_SIMPLIFY_SUCCESS;
     if (TYPE(node) == VAR) return TREE_SIMPLIFY_SUCCESS;
     if (TYPE(node) == ROOT)
-    {
-        SubtreeSimplifyNeutrals(node->right, tree_changed_flag);
-
-        return TREE_SIMPLIFY_SUCCESS;
-    }
+        return SubtreeSimplifyNeutrals(node->right, tree_changed_flag);
 
     TreeSimplifyRes ret_val = TREE_SIMPLIFY_SUCCESS;
 
@@ -409,6 +412,7 @@ TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag
         break;
 
     case MUL:
+
         if (CHECK_VAL(node->left, 1))
         {
             if (LiftChildToParent (node, RIGHT) != LIFT_CHILD_TO_PARENT_SUCCESS)
@@ -559,7 +563,7 @@ NameTable* NameTableCtor ()
         if (!nametable->names[i]) RET_ERROR(NULL, "names[%d] allocation error", i);
     }
 
-    nametable->dx_id = -1;
+    nametable->dx_id = NO_DX_ID;
     nametable->free  = 0;
 
     return nametable;
@@ -639,50 +643,28 @@ LiftChildToParentRes LiftChildToParent (TreeNode* node, NodeLocation child_locat
 {
     if (!node) return LIFT_CHILD_TO_PARENT_SUCCESS;
 
-    // Node* child_node = child_location == LEFT ? node->left : node->right;
+    TreeNode* child_node = child_location == LEFT ? node->left : node->right;
 
-    if (child_location == LEFT)
-    {
-        if (!node->left)
-            RET_ERROR (LIFT_CHILD_TO_PARENT_ERR, "Nothing to lift: left null pointer");
+    if (!child_node)
+        RET_ERROR(LIFT_CHILD_TO_PARENT_ERR, "Nothing to lift, child null pointer");
 
-        VAL(node)  = VAL(node->left);
-        TYPE(node) = TYPE(node->left);
-        TreeNodeDtor(node->right);
+    VAL(node)  = VAL(child_node);
+    TYPE(node) = TYPE(child_node);
 
-        if (node->left->left)  node->left->left->prev  = node;
-        if (node->left->right) node->left->right->prev = node;
+    if (child_node->left)  child_node->left->prev  = node;
+    if (child_node->right) child_node->right->prev = node;
 
-        node->right = node->left->right;
-        TreeNode* old_left = node->left;
-        node->left = node->left->left;
-        TreeNodeDtor(old_left);
-
-        return LIFT_CHILD_TO_PARENT_SUCCESS;
-    }
-    if (child_location == RIGHT)
-    {
-        if (!node->right)
-            RET_ERROR (LIFT_CHILD_TO_PARENT_ERR, "Nothing to lift: right null pointer");
-
-        VAL(node)  = VAL(node->right);
-        TYPE(node) = TYPE(node->right);
+    if (child_node == node->left)
+        TreeNodeDtor (node->right);
+    else
         TreeNodeDtor(node->left);
 
-        if (node->right->left)  node->right->left->prev  = node;
-        if (node->right->right) node->right->right->prev = node;
+    node->left  = child_node->left;
+    node->right = child_node->right;
 
-        node->left = node->right->left;
-        TreeNode* old_right = node->right;
-        node->right = node->right->right;
-        TreeNodeDtor(old_right);
+    TreeNodeDtor(child_node);
 
-        return LIFT_CHILD_TO_PARENT_SUCCESS;
-    }
-
-    RET_ERROR(LIFT_CHILD_TO_PARENT_ERR,
-        "Possible child locations are only LEFT(%d) or RIGHT(%d), given (%d)",
-                                                LEFT, RIGHT, child_location);
+    return LIFT_CHILD_TO_PARENT_SUCCESS;
 }
 
 // ============================================================================================
@@ -1047,7 +1029,7 @@ SpecifyDxRes SpecifyDx (NameTable* nametable)
 
     int dx_id = FindVarInNametable(nametable, var_name);
 
-    while (dx_id == -1) // not found
+    while (dx_id == NO_DX_ID) // not found
     {
         if (streq(var_name, "quit"))
         {
@@ -1075,8 +1057,8 @@ int UpdNameTable (NameTable* nametable, char* word)
 {
     assert(nametable);
     assert(word);
-    if (!nametable) RET_ERROR(-1, "Nametable null pointer");
-    if (!word)      RET_ERROR(-1, "Word null pointer");
+    if (!nametable) RET_ERROR(NO_DX_ID, "Nametable null pointer");
+    if (!word)      RET_ERROR(NO_DX_ID, "Word null pointer");
 
     strcpy(nametable->names[nametable->free], word);
 
@@ -1125,7 +1107,7 @@ int SubtreeHasVars (const TreeNode* node, const NameTable* nametable)
 {
     assert(nametable);
 
-    if (nametable->dx_id == -1) return 0;
+    if (nametable->dx_id == NO_DX_ID) return 0;
     if (!node) return 0;
     if (TYPE(node) == NUM || TYPE(node) == ERR) return 0;
 

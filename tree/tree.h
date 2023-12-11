@@ -20,6 +20,7 @@ const int MAX_TREE = 5000; // max len of a string-written tree in a file
 const int MAX_OP   = 10;   // max len of an operator or variable name
 
 const int NAMETABLE_CAPACITY = 10;
+const int NO_DX_ID = -1;
 
 const double EXPONENT = 2.718281828;
 const double PI       = 3.141592654;
@@ -29,7 +30,7 @@ const double PI       = 3.141592654;
 #define TYPE(node) (node)->data.type
 #define VAL(node)  (node)->data.val
 
-#define CHECK_VAL(node, val) (TYPE(node) == NUM && dbleq(VAL(node), 0))
+#define CHECK_VAL(node, val) (TYPE(node) == NUM && dbleq(VAL(node), val))
 // ===============================================
 
 typedef enum
@@ -194,7 +195,8 @@ TreeEvalRes SubtreeEval     (const TreeNode* node, const Tree* tree, double* res
 TreeEvalRes SubtreeEvalUnOp (const TreeNode* node, double right, double* result);
 TreeEvalRes SubtreeEvalBiOp (const TreeNode* node, double left, double right, double* result);
 
-TreeSimplifyRes TreeSimplify (Tree* tree);
+TreeSimplifyRes TreeSimplify    (Tree* tree);
+TreeSimplifyRes SubtreeSimplify (TreeNode* node);
 TreeSimplifyRes SubtreeSimplifyConstants (TreeNode* node, int* tree_changed_flag);
 TreeSimplifyRes SubtreeSimplifyNeutrals  (TreeNode* node, int* tree_changed_flag);
 
