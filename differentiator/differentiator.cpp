@@ -24,13 +24,13 @@ Tree* Derivative (const Tree* tree)
 
     Tree* diff_tree = TreeCtor();
 
-    NameTableCopy (diff_tree->nametable, tree->nametable);
+    if (NameTableCopy (diff_tree->nametable, tree->nametable) != NAMETABLE_COPY_SUCCESS)
+        RET_ERROR(NULL, "Nametable copying error, differentiation failed");
 
     diff_tree->root = TreeNodeCtor (EQUAL, UN_OP, NULL, NULL,
                                                 Derivative (tree->root, diff_tree));
 
-    // if (TreeSimplify (diff_tree) != TREE_SIMPLIFY_SUCCESS)
-                // RET_ERROR(NULL, "Tree simplification function returned error code");
+    TreeSimplify (diff_tree);
 
     return diff_tree;
 }
@@ -178,23 +178,23 @@ TreeNode* Derivative (const TreeNode* node, Tree* tree, FILE* tex_file)
 
     int dummy_tree_changed_flag = 0;
 
-    if (SubtreeSimplifyConstants(d_node, &dummy_tree_changed_flag) != TREE_SIMPLIFY_SUCCESS)
-        RET_ERROR(NULL, "Tree constants simplification error. Tree corrupted.");
-
-    if (SubtreeSimplifyNeutrals (d_node, &dummy_tree_changed_flag) != TREE_SIMPLIFY_SUCCESS)
-        RET_ERROR(NULL, "Tree neutrals simplification error. Tree corrupted.");
+    if (SubtreeSimplify(d_node) != TREE_SIMPLIFY_SUCCESS)
+        RET_ERROR(NULL, "Simplification failed, differentiators behaviour is undefined");
 
     if (tex_file && (int) VAL(node) != EQUAL)
     {
         fprintf(tex_file, "%s\n", MATAN_PHRASES[rand() % MATAN_PHRASES_COUNT]);
         fprintf(tex_file, "$$  (");
         TexSubtreePrint(tex_file, NULL, node, tree);
-        fprintf(tex_file, ")_{d %s}\' = $$\n", tree->nametable->names[tree->nametable->dx_id]);
+        if (tree->nametable->dx_id != NO_DX_ID)
+            fprintf(tex_file, ")_{d %s}\' = $$\n", tree->nametable->names[tree->nametable->dx_id]);
+        else
+            fprintf(tex_file, ") $$\n");
 
         fprintf(tex_file, "$$ = ");
         TexSubtreePrint(tex_file, node, d_node, tree);
         fprintf(tex_file, "  $$\n");
-    }
+      }
 
     return d_node;
 }
